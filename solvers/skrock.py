@@ -9,6 +9,7 @@ with safe_import_context() as import_ctx:
 
     # import your reusable functions here
     import deepinv as dinv
+    from dinv.sampling.utils import Welford
     import torch
 
 
@@ -30,6 +31,8 @@ class Solver(BaseSolver):
         'eta' : [0.05],
         'inner_iter' : [10],
       }
+    
+    statistics = Welford()
 
     # List of packages needed to run the solver. See the corresponding
     # section in objective.py
@@ -41,7 +44,7 @@ class Solver(BaseSolver):
         # `Objective.get_objective`. This defines the benchmark's API for
         # passing the objective to the solver.
         # It is customizable for each benchmark.
-        self.X, self.y, self.physics, self.prior, self.likelihood = X, y, physics, prior, likelihood
+        self.y, self.physics, self.prior, self.likelihood = y, physics, prior, likelihood
 
     def run(self, n_iter, callback):
         # This is the function that is called to evaluate the solver.
@@ -60,13 +63,13 @@ class Solver(BaseSolver):
         for i_ in range(self.parameters['burnin']):
             burnin_x = sampler.forward(burnin_x, self.y, self.physics, self.likelihood, self.prior)
 
-        self.x = burnin_x
+        self.x = [burnin_x]
         for i_ in range(n_iter):
             while callback():
                 temp = self.x
                 for k_ in range(self.parameters['thinning_step']):
                     temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
-                self.x = temp
+                self.x.append(temp)
 
     def get_result(self):
         # Return the result from one optimization run.
@@ -74,4 +77,6 @@ class Solver(BaseSolver):
         # keyword arguments for `Objective.evaluate_result`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-        return dict(x=self.x)
+        self.statistics.update(self.x[-1])
+
+        return dict(x_est=self.statistics.mean())
