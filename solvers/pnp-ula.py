@@ -18,7 +18,7 @@ class Solver(BaseSolver):
 
     # Name to select the solver in the CLI and to display the results.
     name = 'pnp-ula'
-
+    sampling_strategy = "callback"
     # List of parameters for the solver. The benchmark will consider
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
@@ -40,7 +40,7 @@ class Solver(BaseSolver):
         # It is customizable for each benchmark.
         self.X, self.y, self.physics, self.prior, self.likelihood = X, y, physics, prior, likelihood
 
-    def run(self, n_iter):
+    def run(self, n_iter, callback):
         # This is the function that is called to evaluate the solver.
         # It runs the algorithm for a given a number of iterations `n_iter`.
         # You can also use a `tolerance` or a `callback`, as described in
@@ -53,18 +53,18 @@ class Solver(BaseSolver):
         
         sampler = dinv.sampling.ULAIterator(step_size, alpha, noise_lvl)
 
-        samples = []
+        burnin_x = self.y
 
-        X_ = self.y
+        for i_ in range(self.parameters['burnin']):
+            burnin_x = sampler.forward(burnin_x, self.y, self.physics, self.likelihood, self.prior)
 
+        self.x = burnin_x
         for i_ in range(n_iter):
-            X_ =sampler.forward(X_, self.y, self.physics, self.likelihood, self.prior)
-
-            if i_ > self.parameters['burnin'] and i_ % self.parameters['thinning_step'] == 0:
-                samples.append(X_)
-
-        samples_t = torch.tensor(samples)
-        self.beta = samples_t 
+            while callback():
+                temp = self.x
+                for k_ in range(self.parameters['thinning_step']):
+                    temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
+                self.x = temp
 
     def get_result(self):
         # Return the result from one optimization run.
@@ -72,4 +72,4 @@ class Solver(BaseSolver):
         # keyword arguments for `Objective.evaluate_result`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-        return dict(beta=self.beta)
+        return dict(x=self.x)
