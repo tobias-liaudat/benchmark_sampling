@@ -55,7 +55,7 @@ class Solver(BaseSolver):
         noise_lvl = self.physics.noise_model.sigma
 
         # Get likelihood norm
-        likelihood_norm = self.likelihood.norm()
+        likelihood_norm = self.likelihood.norm
         # Compute step size
         step_size = self.scale_step / likelihood_norm
         
