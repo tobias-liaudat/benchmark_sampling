@@ -32,7 +32,6 @@ class Objective(BaseObjective):
     # All parameters 'p' defined here are available as 'self.p'.
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
-        'alpha'     :       [1.],
         'prior'     :       [dinv.optim.ScorePrior(
                                 denoiser=dinv.models.DnCNN(pretrained="download_lipschitz")
                             ).to(device)],
