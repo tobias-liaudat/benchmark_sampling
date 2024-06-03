@@ -9,6 +9,7 @@ with safe_import_context() as import_ctx:
 
     # import your reusable functions here
     import deepinv as dinv
+    from dinv.sampling.utils import Welford
     import torch
 
 
@@ -24,22 +25,25 @@ class Solver(BaseSolver):
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
         'scale_step': [0.99],
-        'burnin' : 100,
-        'thinning_step' : 10,
-        'iterations': 100,
+        'burnin' : [100],
+        'thinning_step' : [10],
+        'iterations': [100],
+        'alpha': [1],
       }
+    
+    statistics = Welford()
 
     # List of packages needed to run the solver. See the corresponding
     # section in objective.py
     requirements = []
 
-    def set_objective(self, X, y, physics, prior, likelihood):
+    def set_objective(self, y, physics, prior, likelihood):
         # Define the information received by each solver from the objective.
         # The arguments of this function are the results of the
         # `Objective.get_objective`. This defines the benchmark's API for
         # passing the objective to the solver.
         # It is customizable for each benchmark.
-        self.X, self.y, self.physics, self.prior, self.likelihood = X, y, physics, prior, likelihood
+        self.y, self.physics, self.prior, self.likelihood = y, physics, prior, likelihood
 
     def run(self, callback):
         # This is the function that is called to evaluate the solver.
@@ -49,21 +53,20 @@ class Solver(BaseSolver):
 
     
         noise_lvl = self.physics.noise_model.sigma
-        alpha = 1
         step_size = self.scale_step / noise_lvl**2
         
-        sampler = dinv.sampling.ULAIterator(step_size, alpha, noise_lvl)
+        sampler = dinv.sampling.ULAIterator(step_size, self.alpha, noise_lvl)
 
         burnin_x = self.y
 
-        for i_ in range(self.parameters['burnin']):
+        for i_ in range(self.burnin):
             burnin_x = sampler.forward(burnin_x, self.y, self.physics, self.likelihood, self.prior)
 
         self.x = [burnin_x]
-        for i_ in range(self.parameters["iterations"]):
+        for i_ in range(self.iterations):
             while callback():
                 temp = self.x[-1]
-                for k_ in range(self.parameters['thinning_step']):
+                for k_ in range(self.thinning_step):
                     temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
                 self.x.append(temp)
 
@@ -73,6 +76,6 @@ class Solver(BaseSolver):
         # keyword arguments for `Objective.evaluate_result`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
+        self.statistics.update(self.x[-1])
 
-
-        return dict(x_est=self.x)
+        return dict(x_est=self.statistics.mean())
