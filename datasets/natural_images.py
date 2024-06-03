@@ -64,7 +64,7 @@ class Dataset(BaseDataset):
 
             gt_img_list.append(gt_img)
 
-        x = torch.tensor(
+        x_true = torch.tensor(
             np.array(gt_img_list), dtype=torch.float32, device=self.device
         ) 
 
@@ -76,8 +76,8 @@ class Dataset(BaseDataset):
         )  # Eventually add more parameters required for other inverse problems
 
         # Generate the observations 
-        y = physics(x)
+        y = physics(x_true)
 
         # The dictionary defines the keyword arguments for `Objective.set_data`
-        return dict(x=x, y=y, physics=physics)
+        return dict(x_true=x_true, y=y, physics=physics)
 
