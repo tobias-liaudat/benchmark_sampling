@@ -36,7 +36,7 @@ class Solver(BaseSolver):
     # section in objective.py
     requirements = []
 
-    def set_objective(self, X, y, physics, prior, likelihood):
+    def set_objective(self, y, physics, prior, likelihood):
         # Define the information received by each solver from the objective.
         # The arguments of this function are the results of the
         # `Objective.get_objective`. This defines the benchmark's API for
