@@ -27,7 +27,7 @@ class Dataset(BaseDataset):
         'sigma' : [0.1],
         'random_state': [27],
         'image_path' : ["./../data/images/BSD/train/"],
-        'extension' : [".png"],
+        'extension' : ["png"],
         'device' : ["cpu"],
         'inv_problem' : ["denoising"],
         'noise_model' : ["gaussian"],
@@ -47,7 +47,7 @@ class Dataset(BaseDataset):
         torch.manual_seed(self.random_state)
 
         # Load the data
-        file_list = list(glob.glob(self.image_path + "*" + self.extension))
+        file_list = list(glob.glob(self.image_path + "*." + self.extension))
         random.shuffle(file_list)
 
         # Load images into a list
