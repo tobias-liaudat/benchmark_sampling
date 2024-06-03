@@ -9,7 +9,7 @@ with safe_import_context() as import_ctx:
 
     # import your reusable functions here
     import deepinv as dinv
-    from dinv.sampling.utils import Welford
+    from deepinv.sampling.utils import Welford
     import torch
 
 
@@ -31,7 +31,6 @@ class Solver(BaseSolver):
         'alpha': [1],
       }
     
-    statistics = Welford()
 
     # List of packages needed to run the solver. See the corresponding
     # section in objective.py
@@ -51,6 +50,7 @@ class Solver(BaseSolver):
         # You can also use a `tolerance` or a `callback`, as described in
         # https://benchopt.github.io/performance_curves.html
 
+        self.statistics = Welford(x=self.y)
     
         noise_lvl = self.physics.noise_model.sigma
         step_size = self.scale_step / noise_lvl**2
