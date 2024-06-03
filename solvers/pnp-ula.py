@@ -26,6 +26,7 @@ class Solver(BaseSolver):
         'scale_step': [0.99],
         'burnin' : 100,
         'thinning_step' : 10,
+        'iterations': 100,
       }
 
     # List of packages needed to run the solver. See the corresponding
@@ -40,7 +41,7 @@ class Solver(BaseSolver):
         # It is customizable for each benchmark.
         self.X, self.y, self.physics, self.prior, self.likelihood = X, y, physics, prior, likelihood
 
-    def run(self, n_iter, callback):
+    def run(self, callback):
         # This is the function that is called to evaluate the solver.
         # It runs the algorithm for a given a number of iterations `n_iter`.
         # You can also use a `tolerance` or a `callback`, as described in
@@ -58,13 +59,13 @@ class Solver(BaseSolver):
         for i_ in range(self.parameters['burnin']):
             burnin_x = sampler.forward(burnin_x, self.y, self.physics, self.likelihood, self.prior)
 
-        self.x = burnin_x
-        for i_ in range(n_iter):
+        self.x = [burnin_x]
+        for i_ in range(self.parameters["iterations"]):
             while callback():
-                temp = self.x
+                temp = self.x[-1]
                 for k_ in range(self.parameters['thinning_step']):
                     temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
-                self.x = temp
+                self.x.append(temp)
 
     def get_result(self):
         # Return the result from one optimization run.
@@ -72,4 +73,6 @@ class Solver(BaseSolver):
         # keyword arguments for `Objective.evaluate_result`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-        return dict(x=self.x)
+
+
+        return dict(x_est=self.x)
