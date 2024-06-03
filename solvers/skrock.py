@@ -55,7 +55,9 @@ class Solver(BaseSolver):
         noise_lvl = self.physics.noise_model.sigma
         step_size = self.scale_step / noise_lvl**2
         
-        sampler = dinv.sampling.SKRockIterator(step_size, self.alpha, self.eta, self.inner_itter, noise_lvl)
+        sampler = dinv.sampling.langevin.SKRockIterator(
+            step_size, self.alpha, self.eta, self.inner_itter, noise_lvl
+        )
 
         burnin_x = self.y
 
