@@ -27,8 +27,9 @@ class Solver(BaseSolver):
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
         'scale_step': [0.99],
-        'burnin' : [20],
-        'thinning_step' : [10],
+        'burnin': [20],
+        'stats_window_length': [5],
+        'thinning_step': [4],
         'iterations': [100],
         'alpha': [1],
       }
@@ -70,14 +71,28 @@ class Solver(BaseSolver):
 
         burnin_x = self.y
 
+        # Initialise the chain with a burnin period
         for i_ in range(self.burnin):
             burnin_x = sampler.forward(burnin_x, self.y, self.physics, self.likelihood, self.prior)
 
-        self.x = [burnin_x]
+        # Initialise the empty list
+        self.x = []
+        temp = burnin_x
+        # Fill the list with the length of the window
+        for it in range(self.stats_window_length):
+            for k_ in range(self.thinning_step):
+                temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
+            self.x.append(temp)
+
+        # Now that the window is full carry out the benchmark        
         while callback():
+            # Remove the last added sample
+            _ = self.x.pop(0)
+            # Draw a new sample
             temp = self.x[-1]
             for k_ in range(self.thinning_step):
                 temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
+            # Add the sample to the list
             self.x.append(temp)
             self.statistics.update(self.x[-1])
 
