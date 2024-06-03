@@ -1,6 +1,5 @@
 from benchopt import BaseSolver, safe_import_context
-import deepinv as dinv
-import torch
+
 
 # Protect the import with `safe_import_context()`. This allows:
 # - skipping import to speed up autocompletion in CLI.
@@ -9,7 +8,8 @@ with safe_import_context() as import_ctx:
     import numpy as np
 
     # import your reusable functions here
-    from benchmark_utils import gradient_ols
+    import deepinv as dinv
+    import torch
 
 
 # The benchmark solvers must be named `Solver` and
@@ -46,25 +46,25 @@ class Solver(BaseSolver):
         # You can also use a `tolerance` or a `callback`, as described in
         # https://benchopt.github.io/performance_curves.html
 
-        #fixme
-        L = np.linalg.norm(self.X, ord=2) ** 2
-        step_size = self.scale_step / L
+    
+        noise_lvl = self.physics.noise_model.sigma
+        alpha = 1
+        step_size = self.scale_step / noise_lvl**2
+        
+        sampler = dinv.sampling.ULAIterator(step_size, alpha, noise_lvl)
 
-        #need access to prior and likelihood, noise level, physics
+        samples = []
 
-        # run sampler for burnin iterations the first time,
-        # then for thinning_step iterations the next times
-        iterations = self.parameters['thinning_step']
-        f = dinv.sampling.ULA(
-            prior=prior,
-            data_fidelity=likelihood,
-            max_iter=iterations,
-            alpha=self.parameters['regularization'],
-            step_size=step_size,
-            verbose=True,
-            sigma=sigma_denoiser,
-        )
-        self.beta = f(self.y, physics)
+        X_ = self.y
+
+        for i_ in range(n_iter):
+            X_ =sampler.forward(X_, self.y, self.physics, self.likelihood, self.prior)
+
+            if i_ > self.parameters['burnin'] and i_ % self.parameters['thinning_step'] == 0:
+                samples.append(X_)
+
+        samples_t = torch.tensor(samples)
+        self.beta = samples_t 
 
     def get_result(self):
         # Return the result from one optimization run.
