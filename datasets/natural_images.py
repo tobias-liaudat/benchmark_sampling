@@ -26,7 +26,6 @@ class Dataset(BaseDataset):
         'n_samples': [10],
         'sigma' : [0.1],
         'random_state': [27],
-        'image_path' : ["./../data/images/BSD/train/"],
         'extension' : ["png"],
         'device' : ["cpu"],
         'inv_problem' : ["denoising"],
@@ -42,12 +41,16 @@ class Dataset(BaseDataset):
         # to `Objective.set_data`. This defines the benchmark's
         # API to pass data. It is customizable for each benchmark.
 
+        image_path = "./benchmark_sampling/data/images/BSD/train/"
+
         # Generate pseudorandom data using `numpy`.
         random.seed(self.random_state)
         torch.manual_seed(self.random_state)
 
         # Load the data
-        file_list = list(glob.glob(self.image_path + "*." + self.extension))
+        file_list = list(glob.glob(image_path + "*." + self.extension))
+        import os
+
         random.shuffle(file_list)
 
         # Load images into a list
