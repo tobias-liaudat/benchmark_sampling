@@ -1,6 +1,11 @@
 
 
 
+## Important
+
+All elements in the parameter dicitonary should be lists!
+
+
 ## Dataset
 
 To call the dataset with different arguments, we can
