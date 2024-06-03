@@ -32,15 +32,7 @@ class Objective(BaseObjective):
     # All parameters 'p' defined here are available as 'self.p'.
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
-        'prior' : [
-            dinv.optim.ScorePrior(
-                denoiser=dinv.models.DnCNN(
-                    pretrained="download_lipschitz",
-                    in_channels=1,
-                    out_channels=1,
-                    device="cpu"
-                )
-            )],
+        'prior_model' : ["dncnn_lipschitz_gray"],
     }
 
     # List of packages needed to run the benchmark.
@@ -88,6 +80,19 @@ class Objective(BaseObjective):
         # for `Solver.set_objective`. This defines the
         # benchmark's API for passing the objective to the solver.
         # It is customizable for each benchmark.
+
+        if self.prior_model == "dncnn_lipschitz_gray":
+            self.prior = dinv.optim.ScorePrior(
+                denoiser=dinv.models.DnCNN(
+                    pretrained="download_lipschitz",
+                    in_channels=1,
+                    out_channels=1,
+                    device="cpu"
+                )
+            )
+        else:
+            raise NotImplementedError("Prior model {:s} not yet implemented.".format(self.prior_model))
+
         return dict(
             y=self.y,
             physics = self.physics,
