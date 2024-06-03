@@ -53,7 +53,11 @@ class Solver(BaseSolver):
         self.statistics = Welford(x=self.y)
     
         noise_lvl = self.physics.noise_model.sigma
-        step_size = self.scale_step * noise_lvl**2
+
+        # Get likelihood norm
+        likelihood_norm = self.likelihood.norm()
+        # Compute step size
+        step_size = self.scale_step / likelihood_norm
         
         sampler = dinv.sampling.langevin.ULAIterator(
             step_size, self.alpha, noise_lvl
