@@ -1,4 +1,5 @@
 from benchopt import BaseSolver, safe_import_context
+from benchopt.stopping_criterion import NoCriterion
 
 
 # Protect the import with `safe_import_context()`. This allows:
@@ -19,7 +20,8 @@ class Solver(BaseSolver):
 
     # Name to select the solver in the CLI and to display the results.
     name = 'pnp-ula'
-    sampling_strategy = "callback"
+    stopping_criterion = NoCriterion(strategy="callback")
+
     # List of parameters for the solver. The benchmark will consider
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
@@ -35,6 +37,9 @@ class Solver(BaseSolver):
     # List of packages needed to run the solver. See the corresponding
     # section in objective.py
     requirements = []
+
+    def get_next(self, stop_val):
+        return stop_val + 1
 
     def set_objective(self, y, physics, prior, likelihood):
         # Define the information received by each solver from the objective.
