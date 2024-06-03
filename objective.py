@@ -57,8 +57,7 @@ class Objective(BaseObjective):
         # API to pass data. This is customizable for each benchmark.
         self.x_true, self.y = x_true, y
         self.physics = physics
-        sigma = physics.noise_model.sigma
-        self.likelihood = dinv.optim.L2(sigma=sigma)
+        self.likelihood = dinv.optim.L2(sigma=physics.noise_model.sigma)
 
     def evaluate_result(self, x_est):
         # The keyword arguments of this function are the keys of the
