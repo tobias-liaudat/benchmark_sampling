@@ -66,7 +66,9 @@ class Dataset(BaseDataset):
 
         x_true = torch.tensor(
             np.array(gt_img_list), dtype=torch.float32, device=self.device
-        ) 
+        )
+        # Add new channel dimension to 1
+        x_true = x_true[:,None,:,:]
 
         # Define the forward model
         physics = inv_problems.define_physics(
