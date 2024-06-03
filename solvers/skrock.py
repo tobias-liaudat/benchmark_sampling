@@ -24,11 +24,11 @@ class Solver(BaseSolver):
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
         'scale_step': [0.99],
-        'burnin' : 100,
-        'thinning_step' : 10,
-        'alpha' : 1,
-        'eta' : 0.05,
-        'inner_iter' : 10
+        'burnin' : [100],
+        'thinning_step' : [10],
+        'alpha' : [1],
+        'eta' : [0.05],
+        'inner_iter' : [10],
       }
 
     # List of packages needed to run the solver. See the corresponding
