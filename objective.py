@@ -32,10 +32,15 @@ class Objective(BaseObjective):
     # All parameters 'p' defined here are available as 'self.p'.
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
-        'prior'         :       [dinv.optim.ScorePrior(
-                                denoiser=dinv.models.DnCNN(pretrained="download_lipschitz")
-                            ).to(device)],
-
+        'prior' : [
+            dinv.optim.ScorePrior(
+                denoiser=dinv.models.DnCNN(
+                    pretrained="download_lipschitz",
+                    in_channels=1,
+                    out_channels=1,
+                    device="cpu"
+                )
+            )],
     }
 
     # List of packages needed to run the benchmark.
@@ -69,6 +74,7 @@ class Objective(BaseObjective):
         # metrics needs to be `value` for convergence detection purposes.
         return dict(
             PSNR = dinv.utils.metric.cal_psnr(x_est, self.x_true),
+            value=1,
         )
 
     def get_one_result(self):
