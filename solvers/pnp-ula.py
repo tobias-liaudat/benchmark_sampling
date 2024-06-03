@@ -53,7 +53,11 @@ class Solver(BaseSolver):
         self.statistics = Welford(x=self.y)
     
         noise_lvl = self.physics.noise_model.sigma
-        step_size = self.scale_step / noise_lvl**2
+
+        # Get likelihood norm
+        likelihood_norm = self.likelihood.norm()
+        # Compute step size
+        step_size = self.scale_step / likelihood_norm
         
         sampler = dinv.sampling.langevin.ULAIterator(
             step_size, self.alpha, noise_lvl
@@ -65,12 +69,12 @@ class Solver(BaseSolver):
             burnin_x = sampler.forward(burnin_x, self.y, self.physics, self.likelihood, self.prior)
 
         self.x = [burnin_x]
-        for i_ in range(self.iterations):
-            while callback():
-                temp = self.x[-1]
-                for k_ in range(self.thinning_step):
-                    temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
-                self.x.append(temp)
+        while callback():
+            temp = self.x[-1]
+            for k_ in range(self.thinning_step):
+                temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
+            self.x.append(temp)
+            self.statistics.update(self.x[-1])
 
     def get_result(self):
         # Return the result from one optimization run.
@@ -78,6 +82,5 @@ class Solver(BaseSolver):
         # keyword arguments for `Objective.evaluate_result`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-        self.statistics.update(self.x[-1])
 
         return dict(x_est=self.statistics.mean())
