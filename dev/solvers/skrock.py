@@ -20,12 +20,14 @@ class Solver(BaseSolver):
     # Name to select the solver in the CLI and to display the results.
     name = 'pnp-ula'
     sampling_strategy = "callback"
+
     # List of parameters for the solver. The benchmark will consider
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
         'scale_step': [0.99],
         'burnin' : [100],
+        'iterations': [100],
         'thinning_step' : [10],
         'alpha' : [1],
         'eta' : [0.05],
@@ -44,7 +46,7 @@ class Solver(BaseSolver):
         # It is customizable for each benchmark.
         self.y, self.physics, self.prior, self.likelihood = y, physics, prior, likelihood
 
-    def run(self, n_iter, callback):
+    def run(self, callback):
         # This is the function that is called to evaluate the solver.
         # It runs the algorithm for a given a number of iterations `n_iter`.
         # You can also use a `tolerance` or a `callback`, as described in
@@ -56,19 +58,19 @@ class Solver(BaseSolver):
         step_size = self.scale_step / noise_lvl**2
         
         sampler = dinv.sampling.langevin.SKRockIterator(
-            step_size, self.alpha, self.eta, self.inner_itter, noise_lvl
+            step_size, self.alpha, self.eta, self.inner_iter, noise_lvl
         )
 
         burnin_x = self.y
 
-        for i_ in range(self.parameters['burnin']):
+        for i_ in range(self.burnin):
             burnin_x = sampler.forward(burnin_x, self.y, self.physics, self.likelihood, self.prior)
 
         self.x = [burnin_x]
-        for i_ in range(n_iter):
+        for i_ in range(self.iterations):
             while callback():
                 temp = self.x
-                for k_ in range(self.parameters['thinning_step']):
+                for k_ in range(self.thinning_step):
                     temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
                 self.x.append(temp)
 
