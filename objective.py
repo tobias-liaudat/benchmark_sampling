@@ -32,9 +32,10 @@ class Objective(BaseObjective):
     # All parameters 'p' defined here are available as 'self.p'.
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
-        'prior'     :       [dinv.optim.ScorePrior(
+        'prior'         :       [dinv.optim.ScorePrior(
                                 denoiser=dinv.models.DnCNN(pretrained="download_lipschitz")
                             ).to(device)],
+
     }
 
     # List of packages needed to run the benchmark.
@@ -56,6 +57,8 @@ class Objective(BaseObjective):
         # API to pass data. This is customizable for each benchmark.
         self.x_true, self.y = x_true, y
         self.physics = physics
+        sigma = physics.noise_model.sigma
+        self.likelihood = dinv.optim.L2(sigma=sigma)
 
     def evaluate_result(self, x_est):
         # The keyword arguments of this function are the keys of the
@@ -83,5 +86,6 @@ class Objective(BaseObjective):
         return dict(
             y=self.y,
             physics = self.physics,
-            prior = self.prior
+            prior = self.prior,
+            likelihood = self.likelihood
         )
