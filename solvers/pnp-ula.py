@@ -2,7 +2,7 @@ from benchopt import BaseSolver, safe_import_context
 from benchopt.stopping_criterion import NoCriterion
 
 from torchvision.utils import save_image
-
+import os
 
 # Protect the import with `safe_import_context()`. This allows:
 # - skipping import to speed up autocompletion in CLI.
@@ -30,10 +30,10 @@ class Solver(BaseSolver):
     parameters = {
         'scale_step': [0.99],
         'burnin': [20],
-        'stats_window_length': [1],
+        'stats_window_length': [100],
         'thinning_step': [4],
         'iterations': [100],
-        'alpha': [1],
+        'alpha': [1.],
         'save_ims'  : [True]
       }
     
@@ -66,10 +66,12 @@ class Solver(BaseSolver):
         if self.save_ims:
             self.it=0
 
+        # Get Physics norm
+        physics_norm = self.physics.compute_norm(self.y[0])
         # Get likelihood norm
         likelihood_norm = self.likelihood.norm
         # Compute step size
-        step_size = self.scale_step / likelihood_norm
+        step_size = self.scale_step / (likelihood_norm + physics_norm)
         
         sampler = dinv.sampling.langevin.ULAIterator(
             step_size, self.alpha, noise_lvl
@@ -109,6 +111,8 @@ class Solver(BaseSolver):
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
         if self.save_ims:
-            save_image(self.x_window[-1], 'benchmark_sampling/outputs/Im_{}.png'.format(self.it), nrow=2)
+            if not os.path.exists('./benchmark_sampling/output_ims/'):
+                os.makedirs('./benchmark_sampling/output_ims/', exist_ok=True)
+            save_image(self.x_window[-1], './benchmark_sampling/output_ims/PnP_ULA_im_{}.png'.format(self.it), nrow=2)
             self.it += self.thinning_step
         return dict(x_window=self.x_window)

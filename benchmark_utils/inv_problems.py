@@ -15,11 +15,17 @@ def define_physics(inv_problem, noise_model, **kwargs):
 
         physics = dinv.physics.Denoising(noise=noise)
     
-    if inv_problem == "deblurring":
+    if inv_problem == "gaussian_deblurring":
         physics = dinv.physics.BlurFFT(
-            (1,180,180),
-            filter = dinv.physics.blur.gaussian_blur(sigma=(3, 3)),
+            kwargs['img_size'],
+            filter = dinv.physics.blur.gaussian_blur(sigma=kwargs['blur_sd']),
             noise_model = noise
+        )
+    
+    if inv_problem == "inpainting":
+        physics = dinv.physics.Inpainting(
+            kwargs['img_size'],
+            mask = kwargs['prop_inpaint']
         )
 
 

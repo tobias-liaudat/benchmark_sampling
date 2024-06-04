@@ -23,12 +23,14 @@ class Dataset(BaseDataset):
     # the cross product for each key in the dictionary.
     # Any parameters 'param' defined here is available as `self.param`.
     parameters = {
-        'n_samples': [10],
+        'n_samples': [1],
         'sigma' : [0.01],
         'random_state': [27],
         'extension' : ["png"],
         'inv_problem' : ["denoising"],
         'noise_model' : ["gaussian"],
+        'blur_sd'     : [(3,3)],
+        'prop_inpaint' : [0.5]
     }
 
     # List of packages needed to run the dataset. See the corresponding
@@ -77,7 +79,10 @@ class Dataset(BaseDataset):
         physics = inv_problems.define_physics(
             inv_problem=self.inv_problem,
             noise_model=self.noise_model,
-            sigma=self.sigma
+            sigma=self.sigma,
+            blur_sd = self.blur_sd,
+            prop_inpaint = self.prop_inpaint,
+            img_size = x_true.size()[-3:]
         )  # Eventually add more parameters required for other inverse problems
 
         # Generate the observations 
