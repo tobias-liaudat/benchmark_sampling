@@ -24,6 +24,11 @@ If arviz has some problems with scipy, try downgrading scipy like this:
 pip install scipy==1.12
 ```
 
+If there's problems with pyiqa / an error like "ImportError: cannot import name 'packaging' from 'pkg_resources' try downgrading setuptools to version
+```bash
+pip install setuptools==69.5.1
+```
+
 ## Dataset
 
 To call the dataset with different arguments, we can
