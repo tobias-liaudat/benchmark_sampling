@@ -30,7 +30,7 @@ class Solver(BaseSolver):
     parameters = {
         'scale_step': [0.99],
         'burnin': [20],
-        'stats_window_length': [1],
+        'stats_window_length': [10],
         'thinning_step': [4],
         'iterations': [100],
         'alpha': [1],

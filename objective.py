@@ -7,7 +7,7 @@ with safe_import_context() as import_ctx:
     import numpy as np
     import deepinv as dinv
     import torch
-    from benchmark_utils import inv_problems, general_utils
+    from benchmark_utils import inv_problems, general_utils, eval_tools
 
 
 # The benchmark objective must be named `Objective` and
@@ -65,8 +65,17 @@ class Objective(BaseObjective):
             x_post_mean, self.x_true, mean_batch=True, to_numpy=True
         ).item()
 
+        # Compute acf and ess on the batch
+        ess_slow, ess_med, ess_fast, lowest_median_acf, lowest_slow_acf, lowest_fast_acf = eval_tools.compute_acf_and_ess(x_window)
+
         return dict(
             PSNR_posterior_mean = psnr_mean,
+            ESS_slow = ess_slow,
+            ESS_med = ess_med,
+            ESS = ess_fast,
+            ACF_med = lowest_median_acf,
+            ACF_slow = lowest_slow_acf, 
+            ACF_fast = lowest_fast_acf,
             value=1,
         )
 
