@@ -7,7 +7,7 @@ with safe_import_context() as import_ctx:
     import numpy as np
     import deepinv as dinv
     import torch
-    from benchmark_utils import inv_problems, general_utils
+    from benchmark_utils import inv_problems, general_utils, eval_tools
 
 
 # The benchmark objective must be named `Objective` and
@@ -26,6 +26,10 @@ class Objective(BaseObjective):
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
         'prior_model' : ["dncnn_lipschitz_gray"],
+        'compute_PSNR' : [True],
+        'compute_lpips' : [True],
+        'compute_ssim' : [False],
+        'compute_acf_ess' : [True],
     }
 
     # List of packages needed to run the benchmark.
@@ -35,7 +39,14 @@ class Objective(BaseObjective):
     # solvers or datasets should be declared in Dataset or Solver (see
     # simulated.py and python-gd.py).
     # Example syntax: requirements = ['numpy', 'pip:jax', 'pytorch:pytorch']
-    requirements = []
+    requirements = [
+        'pytorch:pytorch',
+        'numpy',
+        'pip:deepinv',
+        'pip:arviz',
+        'pip:statsmodels',
+        'pip:pyiqa',
+    ]
 
     # Minimal version of benchopt required to run this benchmark.
     # Bump it up if the benchmark depends on a new feature of benchopt.
@@ -57,18 +68,30 @@ class Objective(BaseObjective):
         # This method can return many metrics in a dictionary. One of these
         # metrics needs to be `value` for convergence detection purposes.
 
+        # Initialise results dictionary
+        results_dict = dict(value=1)
+
         # Compute posterior mean
         x_post_mean = torch.mean(torch.stack(x_window, dim=0), dim=0)
 
-        # Compute the PSNR over the batch
-        psnr_mean = dinv.utils.metric.cal_psnr(
-            x_post_mean, self.x_true, mean_batch=True, to_numpy=True
-        ).item()
 
-        return dict(
-            PSNR_posterior_mean = psnr_mean,
-            value=1,
-        )
+        # Iterate over the metrics
+        for metric, metric_name in zip(self.metrics_list, self.metrics_list_name):
+            results_dict[metric_name] = metric(x_post_mean, self.x_true)
+
+
+        # Compute acf and ess on the batch
+        if self.compute_acf_ess:
+            ess_slow, ess_med, ess_fast, lowest_median_acf, lowest_slow_acf, lowest_fast_acf = eval_tools.compute_acf_and_ess(x_window)
+            # Store results
+            results_dict['ESS_slow'] = ess_slow
+            results_dict['ESS_med'] = ess_med
+            results_dict['ESS_fast'] = ess_fast
+            results_dict['ACF_med'] = lowest_median_acf
+            results_dict['ACF_slow'] = lowest_slow_acf 
+            results_dict['ACF_fast'] = lowest_fast_acf
+
+        return results_dict
 
     def get_one_result(self):
         # Return one solution. The return value should be an object compatible
@@ -90,6 +113,34 @@ class Objective(BaseObjective):
         )
 
         self.likelihood = dinv.optim.L2(sigma=self.physics.noise_model.sigma)
+
+
+        # Define metrics list
+        self.metrics_list = []
+        self.metrics_list_name = []
+        if self.compute_PSNR:
+            psnr_calc = lambda x_est, x_true: dinv.utils.metric.cal_psnr(
+                x_est, x_true, mean_batch=True, to_numpy=True
+            ).item()
+            self.metrics_list.append(psnr_calc)
+            self.metrics_list_name.append("PSNR")
+             
+        if self.compute_lpips:
+            self.lpips = dinv.loss.LPIPS(train=False, device=device)
+            # We apply the mean over the set of images of the dataset
+            lpips_calc = lambda x_est, x_true : torch.mean(
+                self.lpips(x_true, x_est)
+            ).item()
+            self.metrics_list.append(lpips_calc)
+            self.metrics_list_name.append("LPIPS")
+
+        if self.compute_ssim:
+            self.ssim = dinv.loss.SSIM(multiscale=False, train=False, device=device)
+            ssim_calc = lambda x_est, x_true : torch.mean(
+                self.ssim(x_true, x_est)
+            ).item()
+            self.metrics_list.append(ssim_calc)
+            self.metrics_list_name.append("SSIM")
 
         return dict(
             y=self.y,

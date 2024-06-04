@@ -14,11 +14,19 @@ Extra
 ```bash
 pip install arviz
 pip install statsmodels
+pip install pyiqa
 ```
+
+`pyiqa` is required to compute the LPIPS metric.
 
 If arviz has some problems with scipy, try downgrading scipy like this:
 ```bash
 pip install scipy==1.12
+```
+
+If there's problems with pyiqa / an error like "ImportError: cannot import name 'packaging' from 'pkg_resources' try downgrading setuptools to version
+```bash
+pip install setuptools==69.5.1
 ```
 
 ## Dataset
