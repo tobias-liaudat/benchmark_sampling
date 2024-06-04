@@ -26,6 +26,9 @@ class Objective(BaseObjective):
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
         'prior_model' : ["dncnn_lipschitz_gray"],
+        'compute_PSNR' : [True],
+        'compute_lpips' : [True],
+        'compute_ssim' : [True],
     }
 
     # List of packages needed to run the benchmark.
@@ -35,7 +38,14 @@ class Objective(BaseObjective):
     # solvers or datasets should be declared in Dataset or Solver (see
     # simulated.py and python-gd.py).
     # Example syntax: requirements = ['numpy', 'pip:jax', 'pytorch:pytorch']
-    requirements = []
+    requirements = [
+        'pytorch:pytorch',
+        'numpy',
+        'pip:deepinv',
+        'pip:arviz',
+        'pip:statsmodels',
+        'pip:pyiqa',
+    ]
 
     # Minimal version of benchopt required to run this benchmark.
     # Bump it up if the benchmark depends on a new feature of benchopt.
@@ -90,6 +100,30 @@ class Objective(BaseObjective):
         )
 
         self.likelihood = dinv.optim.L2(sigma=self.physics.noise_model.sigma)
+
+
+        # Define metrics list
+        self.metrics_list = []
+        if self.compute_PSNR:
+            psnr_calc = lambda x_est, x_true: dinv.utils.metric.cal_psnr(
+                x_est, x_true, mean_batch=True, to_numpy=True
+            ).item()
+            self.metrics_list.append(psnr_calc)
+             
+        if self.compute_lpips:
+            self.lpips = dinv.loss.LPIPS(train=False, device=device)
+            # We apply the mean over the set of images of the dataset
+            lpips_calc = lambda x_est, x_true : torch.mean(
+                self.lpips(x_true, x_est)
+            ).item()
+            self.metrics_list.append(lpips_calc)
+
+        if self.compute_ssim:
+            self.ssim = dinv.loss.SSIM(multiscale=False, train=False, device=device)
+            ssim_calc = lambda x_est, x_true : torch.mean(
+                self.ssim(x_true, x_est)
+            ).item()
+            self.metrics_list.append(ssim_calc)
 
         return dict(
             y=self.y,
