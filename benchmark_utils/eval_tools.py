@@ -49,7 +49,7 @@ def compute_acf_and_ess(chain):
 
         # compute the quantiles from var_sp
         q = torch.tensor([0.25, 0.5, 0.75])
-        result = torch.quantile(var_sp, q, interpolation='lower')
+        result = torch.quantile(var_sp, q.to(var_sp.device), interpolation='lower')
 
         # # --- Medium-speed trace of the Markov chain
         # now find the indexes of the quantile result
