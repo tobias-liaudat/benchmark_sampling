@@ -12,8 +12,8 @@ with safe_import_context() as import_ctx:
 
     # import your reusable functions here
     import deepinv as dinv
-    from deepinv.sampling.utils import Welford
     import torch
+    from benchmark_utils import general_utils
 
 
 # The benchmark solvers must be named `Solver` and
@@ -67,36 +67,19 @@ class Solver(BaseSolver):
 
         if self.save_ims:
             self.it=0
-        # Get likelihood norm
-        likelihood_term_norm = self.likelihood.norm
-        # Get norm of the physics operator
-        physics_norm = self.physics.compute_norm(x_init)
-        # Full likelihood norm
-        likelihood_lips = (physics_norm + likelihood_term_norm)
 
-        # Compute prior lipschitz
-        spectral_norm_op = dinv.loss.regularisers.JacobianSpectralNorm(
-            max_iter=10, tol=1e-3, eval_mode=False, verbose=True
+        # Compute automatically the step size taking into account the Lipschitz constants
+        step_size = general_utils.compute_step_size(
+            x_init=x_init.clone(),
+            y=self.y.clone(),
+            physics=self.physics,
+            likelihood=self.likelihood,
+            prior=self.prior,
+            scale_step=self.scale_step,
+            sigma_noise_lvl=sigma_noise_lvl
         )
-        output = self.prior.grad(
-            x_init.requires_grad_(), sigma_denoiser=sigma_noise_lvl
-        ).requires_grad_()
-        prior_lips = spectral_norm_op(output, x_init).detach()
-        # We need to detach the variables after the gradient calculations in the
-        # calculation of the spectral norm
-        x_init = x_init.detach()
-        self.y = self.y.detach()
-
-        # Compute step size
-        step_size = (
-            self.scale_step / (likelihood_lips + prior_lips)
-        ).detach()
-
-        print("likelihood_lips: ", likelihood_lips)
-        print("prior_lips: ", prior_lips)
-        print("step_size: ", step_size)
         
-        
+        # Define the sampler
         sampler = dinv.sampling.langevin.ULAIterator(
             step_size, self.alpha, sigma_noise_lvl
         )
