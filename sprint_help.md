@@ -6,6 +6,21 @@
 All elements in the parameter dicitonary should be lists!
 
 
+
+## Dependencies
+
+Extra
+
+```bash
+pip install arviz
+pip install statsmodels
+```
+
+If arviz has some problems with scipy, try downgrading scipy like this:
+```bash
+pip install scipy==1.12
+```
+
 ## Dataset
 
 To call the dataset with different arguments, we can
