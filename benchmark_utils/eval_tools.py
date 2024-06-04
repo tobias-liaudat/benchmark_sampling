@@ -2,6 +2,7 @@ import torch
 import arviz as az
 from statsmodels.tsa.stattools import acf
 import numpy as np
+from benchmark_utils import general_utils
 
 #helper
 def get_acf_index(acf_vec):
@@ -38,7 +39,9 @@ def compute_acf_and_ess(chain):
 
         chain_t = chain_t_all[:,i_,:,:,:].squeeze()
 
-        #fourier transform
+        # Fourier transform
+        if general_utils.get_best_device() == "mps":
+            chain_t = chain_t.cpu()
         X_chain_ft = torch.abs(torch.fft.fft2(chain_t))
 
         # --- Vectorise the the Markov chain
