@@ -1,7 +1,6 @@
 from benchopt import BaseSolver, safe_import_context
 from benchopt.stopping_criterion import NoCriterion
 
-import os
 
 # Protect the import with `safe_import_context()`. This allows:
 # - skipping import to speed up autocompletion in CLI.
@@ -11,6 +10,7 @@ with safe_import_context() as import_ctx:
 
     # import your reusable functions here
     import deepinv as dinv
+    import torch
     from benchmark_utils import general_utils
 
 
@@ -19,7 +19,7 @@ with safe_import_context() as import_ctx:
 class Solver(BaseSolver):
 
     # Name to select the solver in the CLI and to display the results.
-    name = 'pnp-ula'
+    name = 'skrock'
     stopping_criterion = NoCriterion(strategy="callback")
 
     # List of parameters for the solver. The benchmark will consider
@@ -27,11 +27,13 @@ class Solver(BaseSolver):
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
         'scale_step': [0.99],
-        'burnin': [100],
-        'stats_window_length': [10],
-        'thinning_step': [10],
+        'burnin': [10],
+        'stats_window_length': [5],
+        'thinning_step': [2],
         'iterations': [100],
-        'alpha': [1.]
+        'alpha': [1],
+        'eta': [0.05],
+        'inner_iter': [10]
       }
     
 
@@ -55,12 +57,13 @@ class Solver(BaseSolver):
         # It runs the algorithm for a given a number of iterations `n_iter`.
         # You can also use a `tolerance` or a `callback`, as described in
         # https://benchopt.github.io/performance_curves.html
-    
 
+    
         # Get initial x
         x_init = self.y
 
         sigma_noise_lvl = self.physics.noise_model.sigma
+
 
         # Compute automatically the step size taking into account the Lipschitz constants
         step_size = general_utils.compute_step_size(
@@ -72,11 +75,16 @@ class Solver(BaseSolver):
             scale_step=self.scale_step,
             sigma_noise_lvl=sigma_noise_lvl
         )
+
+        # Get likelihood norm
+        likelihood_norm = self.likelihood.norm
+        # Compute step size
+        step_size = self.scale_step / likelihood_norm
         
-        # Define the sampler
-        sampler = dinv.sampling.langevin.ULAIterator(
-            step_size, self.alpha, sigma_noise_lvl
+        sampler = dinv.sampling.langevin.SKRockIterator(
+            step_size, self.alpha, self.inner_iter, self.eta, sigma_noise_lvl
         )
+
 
         # Initialise the chain with a burnin period
         burnin_x = x_init
@@ -109,11 +117,11 @@ class Solver(BaseSolver):
             # Add the sample to the list
             self.x_window.append(temp)
 
-
     def get_result(self):
         # Return the result from one optimization run.
         # The outputs of this function is a dictionary which defines the
         # keyword arguments for `Objective.evaluate_result`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
+
         return dict(x_window=self.x_window)

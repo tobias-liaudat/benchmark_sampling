@@ -25,7 +25,8 @@ def define_physics(inv_problem, noise_model, **kwargs):
     if inv_problem == "inpainting":
         physics = dinv.physics.Inpainting(
             kwargs['img_size'],
-            mask = kwargs['prop_inpaint']
+            mask = kwargs['prop_inpaint'],
+            noise_model = noise
         )
 
 
