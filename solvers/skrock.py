@@ -1,8 +1,6 @@
 from benchopt import BaseSolver, safe_import_context
 from benchopt.stopping_criterion import NoCriterion
 
-from torchvision.utils import save_image
-
 
 # Protect the import with `safe_import_context()`. This allows:
 # - skipping import to speed up autocompletion in CLI.
@@ -21,7 +19,7 @@ with safe_import_context() as import_ctx:
 class Solver(BaseSolver):
 
     # Name to select the solver in the CLI and to display the results.
-    name = 'pnp-ula'
+    name = 'skrock'
     stopping_criterion = NoCriterion(strategy="callback")
 
     # List of parameters for the solver. The benchmark will consider
@@ -29,12 +27,13 @@ class Solver(BaseSolver):
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
         'scale_step': [0.99],
-        'burnin': [100],
-        'stats_window_length': [10],
-        'thinning_step': [10],
+        'burnin': [10],
+        'stats_window_length': [5],
+        'thinning_step': [2],
         'iterations': [100],
         'alpha': [1],
-        'save_ims'  : [True]
+        'eta': [0.05],
+        'inner_iter': [10]
       }
     
 
@@ -58,55 +57,25 @@ class Solver(BaseSolver):
         # It runs the algorithm for a given a number of iterations `n_iter`.
         # You can also use a `tolerance` or a `callback`, as described in
         # https://benchopt.github.io/performance_curves.html
+
+        # self.statistics = Welford(x=self.y)
     
+        noise_lvl = self.physics.noise_model.sigma
 
-        # Get initial x
-        x_init = self.y
-
-        sigma_noise_lvl = self.physics.noise_model.sigma
-
-        if self.save_ims:
-            self.it=0
         # Get likelihood norm
-        likelihood_term_norm = self.likelihood.norm
-        # Get norm of the physics operator
-        physics_norm = self.physics.compute_norm(x_init)
-        # Full likelihood norm
-        likelihood_lips = (physics_norm + likelihood_term_norm)
-
-        # Compute prior lipschitz
-        spectral_norm_op = dinv.loss.regularisers.JacobianSpectralNorm(
-            max_iter=10, tol=1e-3, eval_mode=False, verbose=True
-        )
-        output = self.prior.grad(
-            x_init.requires_grad_(), sigma_denoiser=sigma_noise_lvl
-        ).requires_grad_()
-        prior_lips = spectral_norm_op(output, x_init).detach()
-        # We need to detach the variables after the gradient calculations in the
-        # calculation of the spectral norm
-        x_init = x_init.detach()
-        self.y = self.y.detach()
-
+        likelihood_norm = self.likelihood.norm
         # Compute step size
-        step_size = (
-            self.scale_step / (likelihood_lips + prior_lips)
-        ).detach()
-
-        print("likelihood_lips: ", likelihood_lips)
-        print("prior_lips: ", prior_lips)
-        print("step_size: ", step_size)
+        step_size = self.scale_step / likelihood_norm
         
-        
-        sampler = dinv.sampling.langevin.ULAIterator(
-            step_size, self.alpha, sigma_noise_lvl
+        sampler = dinv.sampling.langevin.SKRockIterator(
+            step_size, self.alpha, self.inner_iter, self.eta, noise_lvl
         )
+
+        burnin_x = self.y
 
         # Initialise the chain with a burnin period
-        burnin_x = x_init
         for i_ in range(self.burnin):
-            burnin_x = sampler.forward(
-                burnin_x, self.y, self.physics, self.likelihood, self.prior
-            )
+            burnin_x = sampler.forward(burnin_x, self.y, self.physics, self.likelihood, self.prior)
 
         # Initialise the empty list
         self.x_window = []
@@ -114,9 +83,7 @@ class Solver(BaseSolver):
         # Fill the list with the length of the window
         for it in range(self.stats_window_length):
             for k_ in range(self.thinning_step):
-                temp = sampler.forward(
-                    temp, self.y, self.physics, self.likelihood, self.prior
-                )
+                temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
             self.x_window.append(temp)
 
         # Now that the window is full carry out the benchmark        
@@ -126,12 +93,10 @@ class Solver(BaseSolver):
             # Remove the last added sample
             _ = self.x_window.pop(0)
             for k_ in range(self.thinning_step):
-                temp = sampler.forward(
-                    temp, self.y, self.physics, self.likelihood, self.prior
-                )
+                temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
             # Add the sample to the list
             self.x_window.append(temp)
-
+            # self.statistics.update(self.x[-1])
 
     def get_result(self):
         # Return the result from one optimization run.
@@ -139,7 +104,5 @@ class Solver(BaseSolver):
         # keyword arguments for `Objective.evaluate_result`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-        if self.save_ims:
-            save_image(self.x_window[-1], 'benchmark_sampling/outputs/Im_{}.png'.format(self.it), nrow=2)
-            self.it += self.thinning_step
+
         return dict(x_window=self.x_window)

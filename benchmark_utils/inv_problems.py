@@ -14,6 +14,13 @@ def define_physics(inv_problem, noise_model, **kwargs):
     if inv_problem == "denoising":
 
         physics = dinv.physics.Denoising(noise=noise)
+    
+    if inv_problem == "deblurring":
+        physics = dinv.physics.BlurFFT(
+            (1,180,180),
+            filter = dinv.physics.blur.gaussian_blur(sigma=(3, 3)),
+            noise_model = noise
+        )
 
 
     return physics

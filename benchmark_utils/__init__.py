@@ -4,6 +4,7 @@
 # the usual import syntax
 
 from . import inv_problems
+from . import eval_tools
 
 def gradient_ols(X, y, beta):
     return X.T @ (X @ beta - y)

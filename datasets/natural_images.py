@@ -25,7 +25,7 @@ class Dataset(BaseDataset):
     # Any parameters 'param' defined here is available as `self.param`.
     parameters = {
         'n_samples': [10],
-        'sigma' : [0.05],
+        'sigma' : [0.01],
         'random_state': [27],
         'extension' : ["png"],
         'inv_problem' : ["denoising"],
