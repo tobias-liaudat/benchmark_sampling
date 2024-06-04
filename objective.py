@@ -55,9 +55,8 @@ class Objective(BaseObjective):
         # API to pass data. This is customizable for each benchmark.
         self.x_true, self.y = x_true, y
         self.physics = physics
-        self.likelihood = dinv.optim.L2(sigma=physics.noise_model.sigma)
 
-    def evaluate_result(self, x_est):
+    def evaluate_result(self, x_window):
         # The keyword arguments of this function are the keys of the
         # dictionary returned by `Solver.get_result`. This defines the
         # benchmark's API to pass solvers' result. This is customizable for
@@ -65,8 +64,21 @@ class Objective(BaseObjective):
 
         # This method can return many metrics in a dictionary. One of these
         # metrics needs to be `value` for convergence detection purposes.
+
+        # Compute posterior mean
+        x_post_mean = torch.mean(torch.stack(x_window, dim=0), dim=0)
+
+        # Compute the PSNR over the batch
+        psnr_mean = dinv.utils.metric.cal_psnr(
+            x_post_mean, self.x_true, mean_batch=True, to_numpy=True
+        ).item()
+
         return dict(
+<<<<<<< HEAD
             PSNR = dinv.utils.metric.cal_psnr(x_est, self.x_true).item(),
+=======
+            PSNR_posterior_mean = psnr_mean,
+>>>>>>> 613d578c5991bab0ffc9c4252d8ea54d9c786c2e
             value=1,
         )
 
@@ -83,6 +95,8 @@ class Objective(BaseObjective):
         # It is customizable for each benchmark.
 
         self.prior = inv_problems.define_prior_model(self.prior_model)
+
+        self.likelihood = dinv.optim.L2(sigma=self.physics.noise_model.sigma)
 
         return dict(
             y=self.y,

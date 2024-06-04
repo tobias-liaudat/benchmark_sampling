@@ -30,7 +30,7 @@ class Solver(BaseSolver):
     parameters = {
         'scale_step': [0.99],
         'burnin': [20],
-        'stats_window_length': [5],
+        'stats_window_length': [1],
         'thinning_step': [4],
         'iterations': [100],
         'alpha': [1],
@@ -92,10 +92,10 @@ class Solver(BaseSolver):
 
         # Now that the window is full carry out the benchmark        
         while callback():
-            # Remove the last added sample
-            _ = self.x_window.pop(0)
             # Draw a new sample
             temp = self.x_window[-1]
+            # Remove the last added sample
+            _ = self.x_window.pop(0)
             for k_ in range(self.thinning_step):
                 temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
             # Add the sample to the list
