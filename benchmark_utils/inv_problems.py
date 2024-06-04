@@ -9,7 +9,7 @@ def define_physics(inv_problem, noise_model, **kwargs):
         noise = dinv.physics.GaussianNoise(sigma=kwargs['sigma'])
 
     if noise_model == "poisson":
-        noise = dinv.physics.Poisson(gain=kwargs['gain'])
+        noise = dinv.physics.PoissonNoise(gain=kwargs['gain'])
 
     if inv_problem == "denoising":
 
