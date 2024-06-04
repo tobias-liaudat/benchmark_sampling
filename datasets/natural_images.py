@@ -8,6 +8,7 @@ with safe_import_context() as import_ctx:
     import random
     import glob
     import torch
+    import torchvision as tv
     from deepinv.physics import Denoising, GaussianNoise
     import imageio.v3 as iio
     from benchmark_utils import inv_problems, general_utils
@@ -24,7 +25,7 @@ class Dataset(BaseDataset):
     # Any parameters 'param' defined here is available as `self.param`.
     parameters = {
         'n_samples': [10],
-        'sigma' : [0.1],
+        'sigma' : [0.05],
         'random_state': [27],
         'extension' : ["png"],
         'inv_problem' : ["denoising"],
@@ -70,6 +71,10 @@ class Dataset(BaseDataset):
         x_true = torch.tensor(
             np.array(gt_img_list), dtype=torch.float32, device=device
         )
+
+        # Crop image to 64x64
+        x_true = tv.transforms.CenterCrop(64)(x_true)    
+
         # Add new channel dimension to 1
         x_true = x_true[:,None,:,:]
 
