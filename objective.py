@@ -7,6 +7,7 @@ with safe_import_context() as import_ctx:
     import numpy as np
     import deepinv as dinv
     import torch
+    from benchmark_utils import inv_problems
 
 device = (
     "cuda"
@@ -72,7 +73,7 @@ class Objective(BaseObjective):
     def get_one_result(self):
         # Return one solution. The return value should be an object compatible
         # with `self.evaluate_result`. This is mainly for testing purposes.
-        return dict(x_est = self.x_true)
+        return dict(x_window = self.x_true)
 
     def get_objective(self):
         # Define the information to pass to each solver to run the benchmark.
@@ -81,17 +82,7 @@ class Objective(BaseObjective):
         # benchmark's API for passing the objective to the solver.
         # It is customizable for each benchmark.
 
-        if self.prior_model == "dncnn_lipschitz_gray":
-            self.prior = dinv.optim.ScorePrior(
-                denoiser=dinv.models.DnCNN(
-                    pretrained="download_lipschitz",
-                    in_channels=1,
-                    out_channels=1,
-                    device="cpu"
-                )
-            )
-        else:
-            raise NotImplementedError("Prior model {:s} not yet implemented.".format(self.prior_model))
+        self.prior = inv_problems.define_prior_model(self.prior_model)
 
         return dict(
             y=self.y,
