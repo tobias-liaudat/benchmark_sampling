@@ -10,7 +10,7 @@ with safe_import_context() as import_ctx:
     import torch
     from deepinv.physics import Denoising, GaussianNoise
     import imageio.v3 as iio
-    from benchmark_utils import inv_problems
+    from benchmark_utils import inv_problems, general_utils
     
 
 # All datasets must be named `Dataset` and inherit from `BaseDataset`
@@ -27,8 +27,7 @@ class Dataset(BaseDataset):
         'sigma' : [0.01],
         'random_state': [27],
         'extension' : ["png"],
-        'device' : ["cpu"],
-        'inv_problem' : ["deblurring"],
+        'inv_problem' : ["denoising"],
         'noise_model' : ["gaussian"],
     }
 
@@ -42,6 +41,10 @@ class Dataset(BaseDataset):
         # API to pass data. It is customizable for each benchmark.
 
         image_path = "./benchmark_sampling/data/images/BSD/train/"
+
+        device = general_utils.get_best_device()
+
+        print("Using torch device: ", device)
 
         # Generate pseudorandom data using `numpy`.
         random.seed(self.random_state)
@@ -65,7 +68,7 @@ class Dataset(BaseDataset):
             gt_img_list.append(gt_img)
 
         x_true = torch.tensor(
-            np.array(gt_img_list), dtype=torch.float32, device=self.device
+            np.array(gt_img_list), dtype=torch.float32, device=device
         )
         # Add new channel dimension to 1
         x_true = x_true[:,None,:,:]

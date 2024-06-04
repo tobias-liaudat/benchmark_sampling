@@ -7,15 +7,7 @@ with safe_import_context() as import_ctx:
     import numpy as np
     import deepinv as dinv
     import torch
-    from benchmark_utils import inv_problems
-
-device = (
-    "cuda"
-    if torch.cuda.is_available()
-    else "mps"
-    if torch.backends.mps.is_available()
-    else "cpu"
-)
+    from benchmark_utils import inv_problems, general_utils
 
 
 # The benchmark objective must be named `Objective` and
@@ -90,7 +82,12 @@ class Objective(BaseObjective):
         # benchmark's API for passing the objective to the solver.
         # It is customizable for each benchmark.
 
-        self.prior = inv_problems.define_prior_model(self.prior_model)
+        device = general_utils.get_best_device()
+
+        self.prior = inv_problems.define_prior_model(
+            self.prior_model,
+            device=device
+        )
 
         self.likelihood = dinv.optim.L2(sigma=self.physics.noise_model.sigma)
 
