@@ -9,7 +9,6 @@ with safe_import_context() as import_ctx:
     import glob
     import torch
     import torchvision as tv
-    from deepinv.physics import Denoising, GaussianNoise
     import imageio.v3 as iio
     from benchmark_utils import inv_problems, general_utils
     
@@ -24,11 +23,11 @@ class Dataset(BaseDataset):
     # the cross product for each key in the dictionary.
     # Any parameters 'param' defined here is available as `self.param`.
     parameters = {
-        'n_samples': [1],
+        'n_samples': [2],
         'sigma' : [0.01],
         'random_state': [27],
         'extension' : ["png"],
-        'inv_problem' : ["denoising"],
+        'inv_problem' : ["super_resolution"],
         'noise_model' : ["gaussian"],
         'blur_sd'     : [(3,3)],
         'prop_inpaint' : [0.5]

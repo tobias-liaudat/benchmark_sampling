@@ -3,8 +3,6 @@ import deepinv as dinv
 
 
 def define_physics(inv_problem, noise_model, **kwargs):
-
-
     if noise_model == "gaussian":
         noise = dinv.physics.GaussianNoise(sigma=kwargs['sigma'])
 
@@ -28,6 +26,14 @@ def define_physics(inv_problem, noise_model, **kwargs):
             mask = kwargs['prop_inpaint'],
             noise_model = noise
         )
+    
+    if inv_problem == "super_resolution":
+        physics = dinv.physics.Downsampling(
+            img_size=kwargs['img_size'],
+            noise_model = noise,
+            padding='circular'
+        )
+ 
 
 
     return physics

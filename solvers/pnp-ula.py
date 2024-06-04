@@ -26,12 +26,12 @@ class Solver(BaseSolver):
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
-        'scale_step': [0.99],
+        'scale_step': [0.5],
         'burnin': [100],
-        'stats_window_length': [10],
-        'thinning_step': [10],
-        'iterations': [100],
-        'alpha': [1.]
+        'stats_window_length': [100],
+        'thinning_step': [1],
+        'iterations': [1000],
+        'alpha': [1.,5.,10.]
       }
     
 
@@ -58,7 +58,7 @@ class Solver(BaseSolver):
     
 
         # Get initial x
-        x_init = self.y
+        x_init = self.physics.A_adjoint(self.y)
 
         sigma_noise_lvl = self.physics.noise_model.sigma
 
