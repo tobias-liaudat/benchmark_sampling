@@ -58,7 +58,7 @@ class Solver(BaseSolver):
     
 
         # Get initial x
-        x_init = self.y
+        x_init = self.physics.A_adjoint(self.y)
 
         sigma_noise_lvl = self.physics.noise_model.sigma
 
