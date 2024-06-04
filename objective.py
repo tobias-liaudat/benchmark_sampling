@@ -72,7 +72,7 @@ class Objective(BaseObjective):
             PSNR_posterior_mean = psnr_mean,
             ESS_slow = ess_slow,
             ESS_med = ess_med,
-            ESS = ess_fast,
+            ESS_fast = ess_fast,
             ACF_med = lowest_median_acf,
             ACF_slow = lowest_slow_acf, 
             ACF_fast = lowest_fast_acf,

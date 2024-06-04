@@ -36,10 +36,10 @@ def compute_acf_and_ess(chain):
     # loop over the im stack (batch)
     for i_ in range(chain_t_all.shape[1]):
 
-        chain_t = chain_t_all[:,i_,:,:,:]
+        chain_t = chain_t_all[:,i_,:,:,:].squeeze()
 
         #fourier transform
-        X_chain_ft = torch.abs(torch.fft.fft2(chain_t[:,0]))
+        X_chain_ft = torch.abs(torch.fft.fft2(chain_t))
 
         # --- Vectorise the the Markov chain
         X_chain_vec_ft = X_chain_ft.reshape(len(chain),-1)
@@ -66,15 +66,15 @@ def compute_acf_and_ess(chain):
 
 
         # --- effective sample size
-        e_slow_list.append(az.ess(trace_elem_high_variance.reshape(-1).numpy()))
-        e_fast_list.append(az.ess(trace_elem_low_variance.reshape(-1).numpy()))
-        e_med_list.append(az.ess(trace_elem_median_variance.reshape(-1).numpy()))
+        e_slow_list.append(az.ess(trace_elem_high_variance.reshape(-1).cpu().numpy()))
+        e_fast_list.append(az.ess(trace_elem_low_variance.reshape(-1).cpu().numpy()))
+        e_med_list.append(az.ess(trace_elem_median_variance.reshape(-1).cpu().numpy()))
 
         # --- Here we are generating the autocorrelation function for these three traces: lower, medium and faster.
         nLags = min(chain_t_all.shape[0], 50)
-        median_acf = acf(trace_elem_median_variance, nlags=nLags)
-        slow_acf = acf(trace_elem_high_variance, nlags=nLags)
-        fast_acf = acf(trace_elem_low_variance, nlags=nLags)
+        median_acf = acf(trace_elem_median_variance.reshape(-1).cpu().numpy(), nlags=nLags)
+        slow_acf = acf(trace_elem_high_variance.reshape(-1).cpu().numpy(), nlags=nLags)
+        fast_acf = acf(trace_elem_low_variance.reshape(-1).cpu().numpy(), nlags=nLags)
 
         # now extract the index of the smallest value in the acf 
         # to determine the speed
