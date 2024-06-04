@@ -56,7 +56,7 @@ class Solver(BaseSolver):
         # You can also use a `tolerance` or a `callback`, as described in
         # https://benchopt.github.io/performance_curves.html
 
-        self.statistics = Welford(x=self.y)
+        # self.statistics = Welford(x=self.y)
     
         noise_lvl = self.physics.noise_model.sigma
 
@@ -76,25 +76,25 @@ class Solver(BaseSolver):
             burnin_x = sampler.forward(burnin_x, self.y, self.physics, self.likelihood, self.prior)
 
         # Initialise the empty list
-        self.x = []
+        self.x_window = []
         temp = burnin_x
         # Fill the list with the length of the window
         for it in range(self.stats_window_length):
             for k_ in range(self.thinning_step):
                 temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
-            self.x.append(temp)
+            self.x_window.append(temp)
 
         # Now that the window is full carry out the benchmark        
         while callback():
             # Remove the last added sample
-            _ = self.x.pop(0)
+            _ = self.x_window.pop(0)
             # Draw a new sample
-            temp = self.x[-1]
+            temp = self.x_window[-1]
             for k_ in range(self.thinning_step):
                 temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
             # Add the sample to the list
-            self.x.append(temp)
-            self.statistics.update(self.x[-1])
+            self.x_window.append(temp)
+            # self.statistics.update(self.x[-1])
 
     def get_result(self):
         # Return the result from one optimization run.
@@ -103,4 +103,4 @@ class Solver(BaseSolver):
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
 
-        return dict(x_est=self.statistics.mean())
+        return dict(x_window=self.x_window)
