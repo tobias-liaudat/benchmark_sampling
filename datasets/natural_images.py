@@ -8,6 +8,7 @@ with safe_import_context() as import_ctx:
     import random
     import glob
     import torch
+    import torchvision as tv
     from deepinv.physics import Denoising, GaussianNoise
     import imageio.v3 as iio
     from benchmark_utils import inv_problems, general_utils
@@ -23,12 +24,14 @@ class Dataset(BaseDataset):
     # the cross product for each key in the dictionary.
     # Any parameters 'param' defined here is available as `self.param`.
     parameters = {
-        'n_samples': [10],
+        'n_samples': [1],
         'sigma' : [0.01],
         'random_state': [27],
         'extension' : ["png"],
         'inv_problem' : ["denoising"],
         'noise_model' : ["gaussian"],
+        'blur_sd'     : [(3,3)],
+        'prop_inpaint' : [0.5]
     }
 
     # List of packages needed to run the dataset. See the corresponding
@@ -70,6 +73,10 @@ class Dataset(BaseDataset):
         x_true = torch.tensor(
             np.array(gt_img_list), dtype=torch.float32, device=device
         )
+
+        # Crop image to 64x64
+        x_true = tv.transforms.CenterCrop(64)(x_true)    
+
         # Add new channel dimension to 1
         x_true = x_true[:,None,:,:]
 
@@ -77,7 +84,10 @@ class Dataset(BaseDataset):
         physics = inv_problems.define_physics(
             inv_problem=self.inv_problem,
             noise_model=self.noise_model,
-            sigma=self.sigma
+            sigma=self.sigma,
+            blur_sd = self.blur_sd,
+            prop_inpaint = self.prop_inpaint,
+            img_size = x_true.size()[-3:]
         )  # Eventually add more parameters required for other inverse problems
 
         # Generate the observations 

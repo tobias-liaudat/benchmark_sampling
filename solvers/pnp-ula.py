@@ -1,8 +1,7 @@
 from benchopt import BaseSolver, safe_import_context
 from benchopt.stopping_criterion import NoCriterion
 
-from torchvision.utils import save_image
-
+import os
 
 # Protect the import with `safe_import_context()`. This allows:
 # - skipping import to speed up autocompletion in CLI.
@@ -12,8 +11,7 @@ with safe_import_context() as import_ctx:
 
     # import your reusable functions here
     import deepinv as dinv
-    from deepinv.sampling.utils import Welford
-    import torch
+    from benchmark_utils import general_utils
 
 
 # The benchmark solvers must be named `Solver` and
@@ -33,8 +31,7 @@ class Solver(BaseSolver):
         'stats_window_length': [10],
         'thinning_step': [4],
         'iterations': [100],
-        'alpha': [1],
-        'save_ims'  : [True]
+        'alpha': [1.]
       }
     
 
@@ -58,28 +55,35 @@ class Solver(BaseSolver):
         # It runs the algorithm for a given a number of iterations `n_iter`.
         # You can also use a `tolerance` or a `callback`, as described in
         # https://benchopt.github.io/performance_curves.html
-
-        # self.statistics = Welford(x=self.y)
     
-        noise_lvl = self.physics.noise_model.sigma
 
-        if self.save_ims:
-            self.it=0
+        # Get initial x
+        x_init = self.y
 
-        # Get likelihood norm
-        likelihood_norm = self.likelihood.norm
-        # Compute step size
-        step_size = self.scale_step / likelihood_norm
+        sigma_noise_lvl = self.physics.noise_model.sigma
+
+        # Compute automatically the step size taking into account the Lipschitz constants
+        step_size = general_utils.compute_step_size(
+            x_init=x_init.clone(),
+            y=self.y.clone(),
+            physics=self.physics,
+            likelihood=self.likelihood,
+            prior=self.prior,
+            scale_step=self.scale_step,
+            sigma_noise_lvl=sigma_noise_lvl
+        )
         
+        # Define the sampler
         sampler = dinv.sampling.langevin.ULAIterator(
-            step_size, self.alpha, noise_lvl
+            step_size, self.alpha, sigma_noise_lvl
         )
 
-        burnin_x = self.y
-
         # Initialise the chain with a burnin period
+        burnin_x = x_init
         for i_ in range(self.burnin):
-            burnin_x = sampler.forward(burnin_x, self.y, self.physics, self.likelihood, self.prior)
+            burnin_x = sampler.forward(
+                burnin_x, self.y, self.physics, self.likelihood, self.prior
+            )
 
         # Initialise the empty list
         self.x_window = []
@@ -87,7 +91,9 @@ class Solver(BaseSolver):
         # Fill the list with the length of the window
         for it in range(self.stats_window_length):
             for k_ in range(self.thinning_step):
-                temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
+                temp = sampler.forward(
+                    temp, self.y, self.physics, self.likelihood, self.prior
+                )
             self.x_window.append(temp)
 
         # Now that the window is full carry out the benchmark        
@@ -97,10 +103,12 @@ class Solver(BaseSolver):
             # Remove the last added sample
             _ = self.x_window.pop(0)
             for k_ in range(self.thinning_step):
-                temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
+                temp = sampler.forward(
+                    temp, self.y, self.physics, self.likelihood, self.prior
+                )
             # Add the sample to the list
             self.x_window.append(temp)
-            # self.statistics.update(self.x[-1])
+
 
     def get_result(self):
         # Return the result from one optimization run.
@@ -108,7 +116,4 @@ class Solver(BaseSolver):
         # keyword arguments for `Objective.evaluate_result`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-        if self.save_ims:
-            save_image(self.x_window[-1], 'benchmark_sampling/outputs/Im_{}.png'.format(self.it), nrow=2)
-            self.it += self.thinning_step
         return dict(x_window=self.x_window)

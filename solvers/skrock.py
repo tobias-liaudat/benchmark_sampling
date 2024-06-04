@@ -10,8 +10,8 @@ with safe_import_context() as import_ctx:
 
     # import your reusable functions here
     import deepinv as dinv
-    from deepinv.sampling.utils import Welford
     import torch
+    from benchmark_utils import general_utils
 
 
 # The benchmark solvers must be named `Solver` and
@@ -58,9 +58,23 @@ class Solver(BaseSolver):
         # You can also use a `tolerance` or a `callback`, as described in
         # https://benchopt.github.io/performance_curves.html
 
-        # self.statistics = Welford(x=self.y)
     
-        noise_lvl = self.physics.noise_model.sigma
+        # Get initial x
+        x_init = self.y
+
+        sigma_noise_lvl = self.physics.noise_model.sigma
+
+
+        # Compute automatically the step size taking into account the Lipschitz constants
+        step_size = general_utils.compute_step_size(
+            x_init=x_init.clone(),
+            y=self.y.clone(),
+            physics=self.physics,
+            likelihood=self.likelihood,
+            prior=self.prior,
+            scale_step=self.scale_step,
+            sigma_noise_lvl=sigma_noise_lvl
+        )
 
         # Get likelihood norm
         likelihood_norm = self.likelihood.norm
@@ -68,14 +82,16 @@ class Solver(BaseSolver):
         step_size = self.scale_step / likelihood_norm
         
         sampler = dinv.sampling.langevin.SKRockIterator(
-            step_size, self.alpha, self.inner_iter, self.eta, noise_lvl
+            step_size, self.alpha, self.inner_iter, self.eta, sigma_noise_lvl
         )
 
-        burnin_x = self.y
 
         # Initialise the chain with a burnin period
+        burnin_x = x_init
         for i_ in range(self.burnin):
-            burnin_x = sampler.forward(burnin_x, self.y, self.physics, self.likelihood, self.prior)
+            burnin_x = sampler.forward(
+                burnin_x, self.y, self.physics, self.likelihood, self.prior
+            )
 
         # Initialise the empty list
         self.x_window = []
@@ -83,7 +99,9 @@ class Solver(BaseSolver):
         # Fill the list with the length of the window
         for it in range(self.stats_window_length):
             for k_ in range(self.thinning_step):
-                temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
+                temp = sampler.forward(
+                    temp, self.y, self.physics, self.likelihood, self.prior
+                )
             self.x_window.append(temp)
 
         # Now that the window is full carry out the benchmark        
@@ -93,10 +111,11 @@ class Solver(BaseSolver):
             # Remove the last added sample
             _ = self.x_window.pop(0)
             for k_ in range(self.thinning_step):
-                temp = sampler.forward(temp, self.y, self.physics, self.likelihood, self.prior)
+                temp = sampler.forward(
+                    temp, self.y, self.physics, self.likelihood, self.prior
+                )
             # Add the sample to the list
             self.x_window.append(temp)
-            # self.statistics.update(self.x[-1])
 
     def get_result(self):
         # Return the result from one optimization run.
