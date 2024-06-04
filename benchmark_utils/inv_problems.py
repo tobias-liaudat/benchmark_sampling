@@ -1,38 +1,53 @@
 import deepinv as dinv
 
-
+from benchmark_utils import general_utils
 
 def define_physics(inv_problem, noise_model, **kwargs):
+
+
+    device = general_utils.get_best_device()
+
     if noise_model == "gaussian":
         noise = dinv.physics.GaussianNoise(sigma=kwargs['sigma'])
-
-    if noise_model == "poisson":
+    elif noise_model == "poisson":
         noise = dinv.physics.PoissonNoise(gain=kwargs['gain'])
+    else:
+        raise NotImplementedError(
+            "The noise model {:s} has not been implemented yet.".format(noise_model)
+        )
 
     if inv_problem == "denoising":
-
         physics = dinv.physics.Denoising(noise=noise)
     
-    if inv_problem == "gaussian_deblurring":
+    elif inv_problem == "gaussian_deblurring":
         physics = dinv.physics.BlurFFT(
             kwargs['img_size'],
             filter = dinv.physics.blur.gaussian_blur(sigma=kwargs['blur_sd']),
-            noise_model = noise
+            noise_model = noise,
+            device=device
         )
     
-    if inv_problem == "inpainting":
+    elif inv_problem == "inpainting":
         physics = dinv.physics.Inpainting(
             kwargs['img_size'],
             mask = kwargs['prop_inpaint'],
-            noise_model = noise
+            noise_model = noise,
+            device=device
         )
     
-    if inv_problem == "super_resolution":
+    elif inv_problem == "super_resolution":
         physics = dinv.physics.Downsampling(
             img_size=kwargs['img_size'],
+            padding='circular',
             noise_model = noise,
-            padding='circular'
+            device=device
         )
+    
+    else:
+        raise NotImplementedError(
+            "The inverse problem {:s} has not been implemented yet.".format(inv_problem)
+        )
+
  
 
 
