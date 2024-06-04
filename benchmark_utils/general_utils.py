@@ -41,7 +41,7 @@ def compute_step_size(x_init, y, physics, likelihood, prior, scale_step, sigma_n
     # Compute step size
     step_size = (
         scale_step / (likelihood_lips + prior_lips)
-    ).detach()
+    ).detach().cpu().numpy().item()
 
     print("likelihood_lips: ", likelihood_lips)
     print("prior_lips: ", prior_lips)
