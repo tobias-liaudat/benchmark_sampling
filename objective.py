@@ -28,7 +28,8 @@ class Objective(BaseObjective):
         'prior_model' : ["dncnn_lipschitz_gray"],
         'compute_PSNR' : [True],
         'compute_lpips' : [True],
-        'compute_ssim' : [True],
+        'compute_ssim' : [False],
+        'compute_acf_ess' : [True],
     }
 
     # List of packages needed to run the benchmark.
@@ -67,27 +68,30 @@ class Objective(BaseObjective):
         # This method can return many metrics in a dictionary. One of these
         # metrics needs to be `value` for convergence detection purposes.
 
+        # Initialise results dictionary
+        results_dict = dict(value=1)
+
         # Compute posterior mean
         x_post_mean = torch.mean(torch.stack(x_window, dim=0), dim=0)
 
-        # Compute the PSNR over the batch
-        psnr_mean = dinv.utils.metric.cal_psnr(
-            x_post_mean, self.x_true, mean_batch=True, to_numpy=True
-        ).item()
+
+        # Iterate over the metrics
+        for metric, metric_name in zip(self.metrics_list, self.metrics_list_name):
+            results_dict[metric_name] = metric(x_post_mean, self.x_true)
+
 
         # Compute acf and ess on the batch
-        ess_slow, ess_med, ess_fast, lowest_median_acf, lowest_slow_acf, lowest_fast_acf = eval_tools.compute_acf_and_ess(x_window)
+        if self.compute_acf_ess:
+            ess_slow, ess_med, ess_fast, lowest_median_acf, lowest_slow_acf, lowest_fast_acf = eval_tools.compute_acf_and_ess(x_window)
+            # Store results
+            results_dict['ESS_slow'] = ess_slow
+            results_dict['ESS_med'] = ess_med
+            results_dict['ESS_fast'] = ess_fast
+            results_dict['ACF_med'] = lowest_median_acf
+            results_dict['ACF_slow'] = lowest_slow_acf 
+            results_dict['ACF_fast'] = lowest_fast_acf
 
-        return dict(
-            PSNR_posterior_mean = psnr_mean,
-            ESS_slow = ess_slow,
-            ESS_med = ess_med,
-            ESS_fast = ess_fast,
-            ACF_med = lowest_median_acf,
-            ACF_slow = lowest_slow_acf, 
-            ACF_fast = lowest_fast_acf,
-            value=1,
-        )
+        return results_dict
 
     def get_one_result(self):
         # Return one solution. The return value should be an object compatible
@@ -113,11 +117,13 @@ class Objective(BaseObjective):
 
         # Define metrics list
         self.metrics_list = []
+        self.metrics_list_name = []
         if self.compute_PSNR:
             psnr_calc = lambda x_est, x_true: dinv.utils.metric.cal_psnr(
                 x_est, x_true, mean_batch=True, to_numpy=True
             ).item()
             self.metrics_list.append(psnr_calc)
+            self.metrics_list_name.append("PSNR")
              
         if self.compute_lpips:
             self.lpips = dinv.loss.LPIPS(train=False, device=device)
@@ -126,6 +132,7 @@ class Objective(BaseObjective):
                 self.lpips(x_true, x_est)
             ).item()
             self.metrics_list.append(lpips_calc)
+            self.metrics_list_name.append("LPIPS")
 
         if self.compute_ssim:
             self.ssim = dinv.loss.SSIM(multiscale=False, train=False, device=device)
@@ -133,6 +140,7 @@ class Objective(BaseObjective):
                 self.ssim(x_true, x_est)
             ).item()
             self.metrics_list.append(ssim_calc)
+            self.metrics_list_name.append("SSIM")
 
         return dict(
             y=self.y,
