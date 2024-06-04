@@ -1,6 +1,8 @@
 from benchopt import BaseSolver, safe_import_context
 from benchopt.stopping_criterion import NoCriterion
 
+from torchvision.utils import save_image
+
 
 # Protect the import with `safe_import_context()`. This allows:
 # - skipping import to speed up autocompletion in CLI.
@@ -32,6 +34,7 @@ class Solver(BaseSolver):
         'thinning_step': [4],
         'iterations': [100],
         'alpha': [1],
+        'save_ims'  : [True]
       }
     
 
@@ -59,6 +62,9 @@ class Solver(BaseSolver):
         # self.statistics = Welford(x=self.y)
     
         noise_lvl = self.physics.noise_model.sigma
+
+        if self.save_ims:
+            self.it=0
 
         # Get likelihood norm
         likelihood_norm = self.likelihood.norm
@@ -102,5 +108,7 @@ class Solver(BaseSolver):
         # keyword arguments for `Objective.evaluate_result`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-
+        if self.save_ims:
+            save_image(self.x_window[-1], 'benchmark_sampling/outputs/Im_{}.png'.format(self.it), nrow=2)
+            self.it += self.thinning_step
         return dict(x_window=self.x_window)

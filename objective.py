@@ -66,7 +66,7 @@ class Objective(BaseObjective):
         # This method can return many metrics in a dictionary. One of these
         # metrics needs to be `value` for convergence detection purposes.
         return dict(
-            PSNR = dinv.utils.metric.cal_psnr(x_est, self.x_true).mean().item(),
+            PSNR = dinv.utils.metric.cal_psnr(x_est, self.x_true).item(),
             value=1,
         )
 
