@@ -74,11 +74,7 @@ class Objective(BaseObjective):
         ).item()
 
         return dict(
-<<<<<<< HEAD
-            PSNR = dinv.utils.metric.cal_psnr(x_est, self.x_true).item(),
-=======
             PSNR_posterior_mean = psnr_mean,
->>>>>>> 613d578c5991bab0ffc9c4252d8ea54d9c786c2e
             value=1,
         )
 

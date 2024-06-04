@@ -24,11 +24,11 @@ class Dataset(BaseDataset):
     # Any parameters 'param' defined here is available as `self.param`.
     parameters = {
         'n_samples': [10],
-        'sigma' : [0.1],
+        'sigma' : [0.01],
         'random_state': [27],
         'extension' : ["png"],
         'device' : ["cpu"],
-        'inv_problem' : ["denoising"],
+        'inv_problem' : ["deblurring"],
         'noise_model' : ["gaussian"],
     }
 
