@@ -1,5 +1,6 @@
 import torch
 import deepinv as dinv
+import os
 
 
 def get_best_device():
@@ -9,6 +10,10 @@ def get_best_device():
         if torch.cuda.is_available()
         else "mps" if torch.backends.mps.is_available() else "cpu"
     )
+
+    if device == "mps":
+        # Enable fallback to CPU if an operation is not implemented in the `mps` GPU device
+        os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
     return device
 
