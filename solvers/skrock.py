@@ -19,23 +19,22 @@ with safe_import_context() as import_ctx:
 class Solver(BaseSolver):
 
     # Name to select the solver in the CLI and to display the results.
-    name = 'skrock'
+    name = "skrock"
     stopping_criterion = NoCriterion(strategy="callback")
 
     # List of parameters for the solver. The benchmark will consider
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
-        'scale_step': [0.99],
-        'burnin': [10],
-        'stats_window_length': [5],
-        'thinning_step': [2],
-        'iterations': [100],
-        'alpha': [1],
-        'eta': [0.05],
-        'inner_iter': [10]
-      }
-    
+        "scale_step": [0.99],
+        "burnin": [10],
+        "stats_window_length": [5],
+        "thinning_step": [2],
+        "iterations": [100],
+        "alpha": [1],
+        "eta": [0.05],
+        "inner_iter": [10],
+    }
 
     # List of packages needed to run the solver. See the corresponding
     # section in objective.py
@@ -50,7 +49,12 @@ class Solver(BaseSolver):
         # `Objective.get_objective`. This defines the benchmark's API for
         # passing the objective to the solver.
         # It is customizable for each benchmark.
-        self.y, self.physics, self.prior, self.likelihood = y, physics, prior, likelihood
+        self.y, self.physics, self.prior, self.likelihood = (
+            y,
+            physics,
+            prior,
+            likelihood,
+        )
 
     def run(self, callback):
         # This is the function that is called to evaluate the solver.
@@ -58,12 +62,10 @@ class Solver(BaseSolver):
         # You can also use a `tolerance` or a `callback`, as described in
         # https://benchopt.github.io/performance_curves.html
 
-    
         # Get initial x
         x_init = self.y
 
         sigma_noise_lvl = self.physics.noise_model.sigma
-
 
         # Compute automatically the step size taking into account the Lipschitz constants
         step_size = general_utils.compute_step_size(
@@ -73,18 +75,17 @@ class Solver(BaseSolver):
             likelihood=self.likelihood,
             prior=self.prior,
             scale_step=self.scale_step,
-            sigma_noise_lvl=sigma_noise_lvl
+            sigma_noise_lvl=sigma_noise_lvl,
         )
 
         # Get likelihood norm
         likelihood_norm = self.likelihood.norm
         # Compute step size
         step_size = self.scale_step / likelihood_norm
-        
+
         sampler = dinv.sampling.langevin.SKRockIterator(
             step_size, self.alpha, self.inner_iter, self.eta, sigma_noise_lvl
         )
-
 
         # Initialise the chain with a burnin period
         burnin_x = x_init
@@ -104,7 +105,7 @@ class Solver(BaseSolver):
                 )
             self.x_window.append(temp)
 
-        # Now that the window is full carry out the benchmark        
+        # Now that the window is full carry out the benchmark
         while callback():
             # Draw a new sample
             temp = self.x_window[-1]
