@@ -139,7 +139,6 @@ class Objective(BaseObjective):
                 x_true_error.flatten().cpu().numpy(),
                 x_post_std_dev.flatten().cpu().numpy(),
                 alternative='two-sided',
-                method=None,
             )
 
             results_dict["pearson_cc"] = pearson_result[0]
