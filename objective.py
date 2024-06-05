@@ -79,6 +79,9 @@ class Objective(BaseObjective):
         # Initialise results dictionary
         results_dict = dict(value=1)
 
+        # Check the window size
+        assert len(x_window) >= np.max(self.compute_metric_sample_means)
+
         # Compute posterior mean
         x_post_mean = torch.mean(torch.stack(x_window, dim=0), dim=0)
 
