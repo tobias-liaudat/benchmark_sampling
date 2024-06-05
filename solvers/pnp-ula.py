@@ -27,9 +27,9 @@ class Solver(BaseSolver):
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
         'scale_step': [0.99],
-        'burnin': [200],
-        'stats_window_length': [200],
-        'thinning_step': [100],
+        'burnin': [1000],
+        'stats_window_length': [20],
+        'thinning_step': [5],
         'iterations': [100],
         'alpha': [1.]
       }
