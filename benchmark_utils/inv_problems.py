@@ -27,6 +27,17 @@ def define_physics(inv_problem, noise_model, **kwargs):
             device=device,
         )
 
+    elif inv_problem == "motion_deblurring":
+        psf_size = 31
+        motion_generator = dinv.physics.generator.MotionBlurGenerator(
+            (psf_size, psf_size), device=device)
+        physics = dinv.physics.BlurFFT(
+            kwargs["img_size"],
+            filter = motion_generator.step(batch_size=1)['filter'],
+            noise_model=noise,
+            device=device,
+        )
+
     elif inv_problem == "inpainting":
         physics = dinv.physics.Inpainting(
             kwargs["img_size"],
@@ -62,9 +73,37 @@ def define_prior_model(prior_model, device, **kwargs):
                 device=device,
             )
         )
+    elif prior_model == "gsdrunet":
+        # Specify the Denoising prior
+        prior = GSPnP(
+            denoiser=dinv.models.GSDRUNet(pretrained="download", train=False).to(device)
+        )
+
+
     else:
         raise NotImplementedError(
             "Prior model {:s} not yet implemented.".format(prior_model)
         )
 
     return prior
+
+
+class GSPnP(dinv.optim.prior.RED):
+    r"""
+    Gradient-Step Denoiser prior.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.explicit_prior = True
+
+    def g(self, x, *args, **kwargs):
+        r"""
+        Computes the prior :math:`g(x)`.
+
+        :param torch.tensor x: Variable :math:`x` at which the prior is computed.
+        :return: (torch.tensor) prior :math:`g(x)`.
+        """
+        return self.denoiser.potential(x, *args, **kwargs)
+
+
