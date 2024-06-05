@@ -1,5 +1,6 @@
 from benchopt import BaseSolver, safe_import_context
 from benchopt.stopping_criterion import NoCriterion
+from benchmark_utils import samplers
 
 import os
 
@@ -77,7 +78,7 @@ class Solver(BaseSolver):
         )
 
         # Define the sampler
-        sampler = dinv.sampling.langevin.IMLAIterator(
+        sampler = samplers.IMLAIterator(
             step_size, self.alpha, sigma_noise_lvl
         )
 
