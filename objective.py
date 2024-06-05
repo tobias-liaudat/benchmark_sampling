@@ -30,6 +30,8 @@ class Objective(BaseObjective):
         'compute_lpips' : [True],
         'compute_ssim' : [False],
         'compute_acf_ess' : [True],
+        'compute_metric_last_sample' : [True],
+        'compute_metric_sample_means' : [[5,10]],
     }
 
     # List of packages needed to run the benchmark.
@@ -68,17 +70,44 @@ class Objective(BaseObjective):
         # This method can return many metrics in a dictionary. One of these
         # metrics needs to be `value` for convergence detection purposes.
 
+        print("self.compute_metric_sample_means: ", self.compute_metric_sample_means)
+        print("len(self.compute_metric_sample_means)", len(self.compute_metric_sample_means))
+        for el in self.compute_metric_sample_means:
+            print(el)
+        # print("self.compute_metric_sample_means: ", self.compute_metric_sample_means)
+
         # Initialise results dictionary
         results_dict = dict(value=1)
 
         # Compute posterior mean
         x_post_mean = torch.mean(torch.stack(x_window, dim=0), dim=0)
 
-
-        # Iterate over the metrics
+        # Iterate over the metrics over the posterior mean
         for metric, metric_name in zip(self.metrics_list, self.metrics_list_name):
-            results_dict[metric_name] = metric(x_post_mean, self.x_true)
+            results_dict[metric_name + "_posterior_mean"] = metric(x_post_mean, self.x_true)
 
+        if self.compute_metric_last_sample:
+            # Get last sample and compute metrics
+            x_last_sample = x_window[-1]
+            # Iterate over the metrics over the last sample
+            for metric, metric_name in zip(self.metrics_list, self.metrics_list_name):
+                results_dict[metric_name + "_one_sample"] = metric(x_last_sample, self.x_true)        
+
+
+        if (len(self.compute_metric_sample_means) == 1) and (self.compute_metric_sample_means[0] == 0):
+            # Compute over an average of the last samples
+            for avrg_num in self.compute_metric_sample_means:
+                # Compute posterior mean
+                x_mean = torch.mean(
+                    torch.stack(x_window, dim=0)[-avrg_num:,:],
+                    dim=0
+                )
+                # Iterate over the metrics over the last sample
+                for metric, metric_name in zip(self.metrics_list, self.metrics_list_name):
+                    results_dict[metric_name + "_" + str(avrg_num) +"_samples"] = metric(
+                        x_last_sample,
+                        self.x_true
+                    )
 
         # Compute acf and ess on the batch
         if self.compute_acf_ess:
