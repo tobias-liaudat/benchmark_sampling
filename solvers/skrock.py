@@ -1,6 +1,7 @@
 from benchopt import BaseSolver, safe_import_context
 from benchopt.stopping_criterion import NoCriterion
 
+import os
 
 # Protect the import with `safe_import_context()`. This allows:
 # - skipping import to speed up autocompletion in CLI.
@@ -10,7 +11,6 @@ with safe_import_context() as import_ctx:
 
     # import your reusable functions here
     import deepinv as dinv
-    import torch
     from benchmark_utils import general_utils
 
 
@@ -27,11 +27,11 @@ class Solver(BaseSolver):
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
         "scale_step": [0.99],
-        "burnin": [10],
-        "stats_window_length": [5],
-        "thinning_step": [2],
+        "burnin": [100],
+        "stats_window_length": [20],
+        "thinning_step": [10],
         "iterations": [100],
-        "alpha": [1],
+        "alpha": [1.],
         "eta": [0.05],
         "inner_iter": [10],
     }
@@ -63,9 +63,9 @@ class Solver(BaseSolver):
         # https://benchopt.github.io/performance_curves.html
 
         # Get initial x
-        x_init = self.y
+        x_init = self.physics.A_adjoint(self.y)
 
-        sigma_noise_lvl = self.physics.noise_model.sigma
+        sigma_noise_lvl = 0.1#self.physics.noise_model.sigma
 
         # Compute automatically the step size taking into account the Lipschitz constants
         step_size = general_utils.compute_step_size(
@@ -78,11 +78,7 @@ class Solver(BaseSolver):
             sigma_noise_lvl=sigma_noise_lvl,
         )
 
-        # Get likelihood norm
-        likelihood_norm = self.likelihood.norm
-        # Compute step size
-        step_size = self.scale_step / likelihood_norm
-
+        # Define the sampler
         sampler = dinv.sampling.langevin.SKRockIterator(
             step_size, self.alpha, self.inner_iter, self.eta, sigma_noise_lvl
         )
@@ -93,7 +89,8 @@ class Solver(BaseSolver):
             burnin_x = sampler.forward(
                 burnin_x, self.y, self.physics, self.likelihood, self.prior
             )
-
+            burnin_x = burnin_x.clamp(min=-1.,max=2.)
+       
         # Initialise the empty list
         self.x_window = []
         temp = burnin_x
@@ -103,6 +100,8 @@ class Solver(BaseSolver):
                 temp = sampler.forward(
                     temp, self.y, self.physics, self.likelihood, self.prior
                 )
+                temp = temp.clamp(min=-1.,max=2.)
+
             self.x_window.append(temp)
 
         # Now that the window is full carry out the benchmark
@@ -115,6 +114,7 @@ class Solver(BaseSolver):
                 temp = sampler.forward(
                     temp, self.y, self.physics, self.likelihood, self.prior
                 )
+                temp = temp.clamp(min=-1.,max=2.)
             # Add the sample to the list
             self.x_window.append(temp)
 
@@ -124,5 +124,4 @@ class Solver(BaseSolver):
         # keyword arguments for `Objective.evaluate_result`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-
         return dict(x_window=self.x_window)

@@ -55,7 +55,6 @@ class Dataset(BaseDataset):
 
         # Load the data
         file_list = list(glob.glob(image_path + "*." + self.extension))
-        import os
 
         random.shuffle(file_list)
 

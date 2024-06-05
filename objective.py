@@ -9,6 +9,7 @@ with safe_import_context() as import_ctx:
     import torch
     from benchmark_utils import inv_problems, general_utils, eval_tools
     from torchvision.utils import save_image
+    from scipy.stats import pearsonr 
     import os
     import datetime
 
@@ -32,10 +33,10 @@ class Objective(BaseObjective):
         "compute_PSNR": [True],
         "compute_lpips": [True],
         "compute_ssim": [False],
-        "compute_acf_ess": [False],
-        "compute_posterior_std_dev_pearson_cc" : [False],
+        "compute_acf_ess": [True],
+        "compute_posterior_std_dev_pearson_cc" : [True],
         "compute_metric_last_sample": [True],
-        "compute_metric_sample_means": [[1, 50]],
+        "compute_metric_sample_means": [[1, 10]],
         "save_image": [True],
         "save_every_iter": [100],
     }
@@ -128,9 +129,21 @@ class Objective(BaseObjective):
                         metric(x_mean, self.x_true)
                     )
 
-        # Compute Pearson correlation coefficient between the posterior mean and the error
+        # Compute Pearson correlation coefficient between the posterior std dev and the error between the ground truth image and the posterior mean
         if self.compute_posterior_std_dev_pearson_cc:
-            a=1
+            x_post_std_dev = torch.std(torch.stack(x_window, dim=0), dim=0)
+            x_true_error = self.x_true - x_mean
+
+            pearson_result = pearsonr(
+                x_true_error.flatten().cpu().numpy(),
+                x_post_std_dev.flatten().cpu().numpy(),
+                alternative='two-sided',
+                method=None,
+            )
+
+            results_dict["pearson_cc"] = pearson_result[0]
+
+
 
         # Compute acf and ess on the batch
         if self.compute_acf_ess:
