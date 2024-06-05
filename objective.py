@@ -75,14 +75,6 @@ class Objective(BaseObjective):
         # This method can return many metrics in a dictionary. One of these
         # metrics needs to be `value` for convergence detection purposes.
 
-        print("self.compute_metric_sample_means: ", self.compute_metric_sample_means)
-        print(
-            "len(self.compute_metric_sample_means)",
-            len(self.compute_metric_sample_means),
-        )
-        for el in self.compute_metric_sample_means:
-            print(el)
-        # print("self.compute_metric_sample_means: ", self.compute_metric_sample_means)
 
         # Initialise results dictionary
         results_dict = dict(value=1)
