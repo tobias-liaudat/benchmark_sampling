@@ -27,7 +27,7 @@ class Dataset(BaseDataset):
         'sigma' : [0.01],
         'random_state': [27],
         'extension' : ["png"],
-        'inv_problem' : ["super_resolution"],
+        'inv_problem' : ["inpainting"],
         'noise_model' : ["gaussian"],
         'blur_sd'     : [(3,3)],
         'prop_inpaint' : [0.5]
