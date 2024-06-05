@@ -124,7 +124,7 @@ class Objective(BaseObjective):
                     self.metrics_list, self.metrics_list_name
                 ):
                     results_dict[metric_name + "_" + str(avrg_num) + "_samples"] = (
-                        metric(x_last_sample, self.x_true)
+                        metric(x_mean, self.x_true)
                     )
 
         # Compute acf and ess on the batch
