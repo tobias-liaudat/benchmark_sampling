@@ -31,7 +31,7 @@ class Objective(BaseObjective):
         "prior_model": ["dncnn_lipschitz_gray"],
         "compute_PSNR": [True],
         "compute_lpips": [True],
-        "compute_ssim": [True],
+        "compute_ssim": [False],
         "compute_acf_ess": [True],
         "compute_metric_last_sample": [True],
         "compute_metric_sample_means": [[5, 10]],
@@ -111,9 +111,7 @@ class Objective(BaseObjective):
                     x_last_sample, self.x_true
                 )
 
-        if (len(self.compute_metric_sample_means) == 1) and (
-            self.compute_metric_sample_means[0] == 0
-        ):
+        if self.compute_metric_sample_means[0] != 0:
             # Compute over an average of the last samples
             for avrg_num in self.compute_metric_sample_means:
                 # Compute posterior mean
