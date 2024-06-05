@@ -32,7 +32,6 @@ class Solver(BaseSolver):
         "thinning_step": [5],
         "iterations": [100],
         "alpha": [10.],
-        "equivariant":[True]
     }
 
     # List of packages needed to run the solver. See the corresponding
@@ -54,12 +53,7 @@ class Solver(BaseSolver):
             prior,
             likelihood,
         )
-        if self.equivariant and hasattr(prior, "denoiser"):
-            self.prior.denoiser = dinv.models.EquivariantDenoiser(
-                self.prior.denoiser,
-                transform='rotoflips',
-                random=True
-            )
+
 
     def run(self, callback):
         # This is the function that is called to evaluate the solver.

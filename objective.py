@@ -30,6 +30,7 @@ class Objective(BaseObjective):
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
         "prior_model": ["dncnn_lipschitz_gray"],#"gsdrunet_gray"],
+        "equivariant":[True],
         "compute_PSNR": [True],
         "compute_lpips": [True],
         "compute_ssim": [False],
@@ -192,6 +193,13 @@ class Objective(BaseObjective):
                 os.makedirs(self.im_folder, exist_ok=True)
 
         self.prior = inv_problems.define_prior_model(self.prior_model, device=device)
+
+        if self.equivariant and hasattr(self.prior, "denoiser"):
+            self.prior.denoiser = dinv.models.EquivariantDenoiser(
+                self.prior.denoiser,
+                transform='rotoflips',
+                random=True
+            )
 
         self.likelihood = dinv.optim.L2(sigma=self.physics.noise_model.sigma)
 
