@@ -7,6 +7,16 @@ All elements in the parameter dicitonary should be lists!
 
 
 
+## Some help
+
+For running wiht M1/2/3 mac machines and using the `mps` GPU device, use:
+
+```zsh
+export PYTORCH_ENABLE_MPS_FALLBACK=1
+```
+to fallback to CPU for operations not implemented in the `mps` GPU.
+
+
 ## Dependencies
 
 Extra
