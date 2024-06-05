@@ -19,21 +19,20 @@ with safe_import_context() as import_ctx:
 class Solver(BaseSolver):
 
     # Name to select the solver in the CLI and to display the results.
-    name = 'pnp-ula'
+    name = "pnp-ula"
     stopping_criterion = NoCriterion(strategy="callback")
 
     # List of parameters for the solver. The benchmark will consider
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
-        'scale_step': [0.99],
-        'burnin': [0],
-        'stats_window_length': [1],
-        'thinning_step': [1],
-        'iterations': [100],
-        'alpha': [1]
-      }
-    
+        "scale_step": [0.99],
+        "burnin": [0],
+        "stats_window_length": [100],
+        "thinning_step": [1],
+        "iterations": [100],
+        "alpha": [10.0],
+    }
 
     # List of packages needed to run the solver. See the corresponding
     # section in objective.py
@@ -48,14 +47,18 @@ class Solver(BaseSolver):
         # `Objective.get_objective`. This defines the benchmark's API for
         # passing the objective to the solver.
         # It is customizable for each benchmark.
-        self.y, self.physics, self.prior, self.likelihood = y, physics, prior, likelihood
+        self.y, self.physics, self.prior, self.likelihood = (
+            y,
+            physics,
+            prior,
+            likelihood,
+        )
 
     def run(self, callback):
         # This is the function that is called to evaluate the solver.
         # It runs the algorithm for a given a number of iterations `n_iter`.
         # You can also use a `tolerance` or a `callback`, as described in
         # https://benchopt.github.io/performance_curves.html
-    
 
         # Get initial x
         x_init = self.physics.A_adjoint(self.y)
@@ -70,9 +73,9 @@ class Solver(BaseSolver):
             likelihood=self.likelihood,
             prior=self.prior,
             scale_step=self.scale_step,
-            sigma_noise_lvl=sigma_noise_lvl
+            sigma_noise_lvl=sigma_noise_lvl,
         )
-        
+
         # Define the sampler
         sampler = dinv.sampling.langevin.ULAIterator(
             step_size, self.alpha, sigma_noise_lvl
@@ -99,7 +102,7 @@ class Solver(BaseSolver):
 
             self.x_window.append(temp)
 
-        # Now that the window is full carry out the benchmark        
+        # Now that the window is full carry out the benchmark
         while callback():
             # Draw a new sample
             temp = self.x_window[-1]
@@ -112,7 +115,6 @@ class Solver(BaseSolver):
                 temp = temp.clamp(min=-1.,max=2.)
             # Add the sample to the list
             self.x_window.append(temp)
-
 
     def get_result(self):
         # Return the result from one optimization run.

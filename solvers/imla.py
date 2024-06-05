@@ -1,6 +1,7 @@
 from benchopt import BaseSolver, safe_import_context
 from benchopt.stopping_criterion import NoCriterion
 
+import os
 
 # Protect the import with `safe_import_context()`. This allows:
 # - skipping import to speed up autocompletion in CLI.
@@ -10,7 +11,6 @@ with safe_import_context() as import_ctx:
 
     # import your reusable functions here
     import deepinv as dinv
-    import torch
     from benchmark_utils import general_utils
 
 
@@ -19,7 +19,7 @@ with safe_import_context() as import_ctx:
 class Solver(BaseSolver):
 
     # Name to select the solver in the CLI and to display the results.
-    name = "skrock"
+    name = "imla"
     stopping_criterion = NoCriterion(strategy="callback")
 
     # List of parameters for the solver. The benchmark will consider
@@ -27,13 +27,11 @@ class Solver(BaseSolver):
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
         "scale_step": [0.99],
-        "burnin": [10],
-        "stats_window_length": [5],
-        "thinning_step": [2],
+        "burnin": [0],
+        "stats_window_length": [100],
+        "thinning_step": [1],
         "iterations": [100],
-        "alpha": [1],
-        "eta": [0.05],
-        "inner_iter": [10],
+        "alpha": [10.0],
     }
 
     # List of packages needed to run the solver. See the corresponding
@@ -63,7 +61,7 @@ class Solver(BaseSolver):
         # https://benchopt.github.io/performance_curves.html
 
         # Get initial x
-        x_init = self.y
+        x_init = self.physics.A_adjoint(self.y)
 
         sigma_noise_lvl = self.physics.noise_model.sigma
 
@@ -78,13 +76,9 @@ class Solver(BaseSolver):
             sigma_noise_lvl=sigma_noise_lvl,
         )
 
-        # Get likelihood norm
-        likelihood_norm = self.likelihood.norm
-        # Compute step size
-        step_size = self.scale_step / likelihood_norm
-
-        sampler = dinv.sampling.langevin.SKRockIterator(
-            step_size, self.alpha, self.inner_iter, self.eta, sigma_noise_lvl
+        # Define the sampler
+        sampler = dinv.sampling.langevin.IMLAIterator(
+            step_size, self.alpha, sigma_noise_lvl
         )
 
         # Initialise the chain with a burnin period
@@ -124,5 +118,4 @@ class Solver(BaseSolver):
         # keyword arguments for `Objective.evaluate_result`
         # This defines the benchmark's API for solvers' results.
         # it is customizable for each benchmark.
-
         return dict(x_window=self.x_window)

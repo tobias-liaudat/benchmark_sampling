@@ -18,11 +18,11 @@ class Dataset(BaseDataset):
     # the cross product for each key in the dictionary.
     # Any parameters 'param' defined here is available as `self.param`.
     parameters = {
-        'n_samples, n_features': [
+        "n_samples, n_features": [
             (1000, 500),
             (5000, 200),
         ],
-        'random_state': [27],
+        "random_state": [27],
     }
 
     # List of packages needed to run the dataset. See the corresponding

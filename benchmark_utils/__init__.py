@@ -7,5 +7,6 @@ from . import inv_problems
 from . import eval_tools
 from . import general_utils
 
+
 def gradient_ols(X, y, beta):
     return X.T @ (X @ beta - y)

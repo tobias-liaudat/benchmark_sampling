@@ -1,6 +1,6 @@
-
 import torch
 import deepinv as dinv
+import os
 
 
 def get_best_device():
@@ -8,22 +8,26 @@ def get_best_device():
     device = (
         "cuda"
         if torch.cuda.is_available()
-        else "mps"
-        if torch.backends.mps.is_available()
-        else "cpu"
+        else "mps" if torch.backends.mps.is_available() else "cpu"
     )
+
+    if device == "mps":
+        # Enable fallback to CPU if an operation is not implemented in the `mps` GPU device
+        os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
     return device
 
 
-def compute_step_size(x_init, y, physics, likelihood, prior, scale_step, sigma_noise_lvl):
+def compute_step_size(
+    x_init, y, physics, likelihood, prior, scale_step, sigma_noise_lvl
+):
 
     # Get likelihood norm
     likelihood_term_norm = likelihood.norm
     # Get norm of the physics operator
     physics_norm = physics.compute_norm(x_init)
     # Full likelihood norm
-    likelihood_lips = (physics_norm + likelihood_term_norm)
+    likelihood_lips = physics_norm + likelihood_term_norm
 
     # Compute prior lipschitz
     spectral_norm_op = dinv.loss.regularisers.JacobianSpectralNorm(
@@ -40,12 +44,11 @@ def compute_step_size(x_init, y, physics, likelihood, prior, scale_step, sigma_n
 
     # Compute step size
     step_size = (
-        scale_step / (likelihood_lips + prior_lips)
-    ).detach().cpu().numpy().item()
+        (scale_step / (likelihood_lips + prior_lips)).detach().cpu().numpy().item()
+    )
 
     print("likelihood_lips: ", likelihood_lips)
     print("prior_lips: ", prior_lips)
     print("step_size: ", step_size)
 
     return step_size
-

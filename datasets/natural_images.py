@@ -11,7 +11,7 @@ with safe_import_context() as import_ctx:
     import torchvision as tv
     import imageio.v3 as iio
     from benchmark_utils import inv_problems, general_utils
-    
+
 
 # All datasets must be named `Dataset` and inherit from `BaseDataset`
 class Dataset(BaseDataset):
@@ -23,14 +23,15 @@ class Dataset(BaseDataset):
     # the cross product for each key in the dictionary.
     # Any parameters 'param' defined here is available as `self.param`.
     parameters = {
-        'n_samples': [4],
-        'sigma' : [0.01],
-        'random_state': [27],
-        'extension' : ["png"],
-        'inv_problem' : ["inpainting"],
-        'noise_model' : ["gaussian"],
-        'blur_sd'     : [(3,3)],
-        'prop_inpaint' : [0.5]
+        "n_samples": [4],
+        "sigma": [0.02],
+        "random_state": [27],
+        "extension": ["png"],
+        "inv_problem": ["gaussian_deblurring"],
+        "noise_model": ["gaussian"],
+        "blur_sd": [(0.5, 0.5)],
+        "prop_inpaint": [0.5],
+        "img_size" : [64],
     }
 
     # List of packages needed to run the dataset. See the corresponding
@@ -59,39 +60,37 @@ class Dataset(BaseDataset):
         random.shuffle(file_list)
 
         # Load images into a list
-        gt_img_list = [] # torch.zeros(self.n_samples)
+        gt_img_list = []  # torch.zeros(self.n_samples)
         for it in range(self.n_samples):
-            gt_img = np.array(
-                iio.imread(file_list[it])
-            )
+            gt_img = np.array(iio.imread(file_list[it]))
             # Scale to [0,1]
-            gt_img = (gt_img - gt_img.min())/(gt_img.max() - gt_img.min())
+            gt_img = (gt_img - gt_img.min()) / (gt_img.max() - gt_img.min())
 
             gt_img_list.append(gt_img)
 
-        x_true = torch.tensor(
-            np.array(gt_img_list), dtype=torch.float32, device=device
-        )
+        x_true = torch.tensor(np.array(gt_img_list), dtype=torch.float32, device=device)
 
-        # Crop image to 64x64
-        x_true = tv.transforms.CenterCrop(64)(x_true)    
+        
+
+        # Crop image to [img_size x img_size]
+        if x_true.shape[-1] < self.img_size:
+            x_true = tv.transforms.CenterCrop(self.img_size)(x_true)
 
         # Add new channel dimension to 1
-        x_true = x_true[:,None,:,:]
+        x_true = x_true[:, None, :, :]
 
         # Define the forward model
         physics = inv_problems.define_physics(
             inv_problem=self.inv_problem,
             noise_model=self.noise_model,
             sigma=self.sigma,
-            blur_sd = self.blur_sd,
-            prop_inpaint = self.prop_inpaint,
-            img_size = x_true.size()[-3:]
+            blur_sd=self.blur_sd,
+            prop_inpaint=self.prop_inpaint,
+            img_size=x_true.size()[-3:],
         )  # Eventually add more parameters required for other inverse problems
 
-        # Generate the observations 
+        # Generate the observations
         y = physics(x_true)
 
         # The dictionary defines the keyword arguments for `Objective.set_data`
         return dict(x_true=x_true, y=y, physics=physics)
-
