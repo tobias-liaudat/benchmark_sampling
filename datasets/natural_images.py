@@ -24,14 +24,14 @@ class Dataset(BaseDataset):
     # Any parameters 'param' defined here is available as `self.param`.
     parameters = {
         "n_samples": [4],
-        "sigma": [0.02],
+        "sigma": [0.01],
         "random_state": [27],
         "extension": ["png"],
         "inv_problem": ["inpainting"],
         "noise_model": ["gaussian"],
         "blur_sd": [(0.75, 0.75)],
         "prop_inpaint": [0.5],
-        "img_size" : [0],
+        "img_size" : [64],
     }
 
     # List of packages needed to run the dataset. See the corresponding
@@ -73,7 +73,7 @@ class Dataset(BaseDataset):
         
 
         # Crop image to [img_size x img_size]
-        if x_true.shape[-1] < self.img_size and self.img_size != 0:
+        if x_true.shape[-1] > self.img_size and self.img_size != 0:
             x_true = tv.transforms.CenterCrop(self.img_size)(x_true)
 
         # Add new channel dimension to 1

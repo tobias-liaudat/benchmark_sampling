@@ -31,7 +31,7 @@ class Solver(BaseSolver):
         "stats_window_length": [100],
         "thinning_step": [1],
         "iterations": [100],
-        "alpha": [10.0],
+        "alpha": [10.],
     }
 
     # List of packages needed to run the solver. See the corresponding
@@ -87,7 +87,8 @@ class Solver(BaseSolver):
             burnin_x = sampler.forward(
                 burnin_x, self.y, self.physics, self.likelihood, self.prior
             )
-
+            burnin_x = burnin_x.clamp(min=-1.,max=2.)
+       
         # Initialise the empty list
         self.x_window = []
         temp = burnin_x
@@ -97,6 +98,8 @@ class Solver(BaseSolver):
                 temp = sampler.forward(
                     temp, self.y, self.physics, self.likelihood, self.prior
                 )
+                temp = temp.clamp(min=-1.,max=2.)
+
             self.x_window.append(temp)
 
         # Now that the window is full carry out the benchmark
@@ -109,6 +112,7 @@ class Solver(BaseSolver):
                 temp = sampler.forward(
                     temp, self.y, self.physics, self.likelihood, self.prior
                 )
+                temp = temp.clamp(min=-1.,max=2.)
             # Add the sample to the list
             self.x_window.append(temp)
 

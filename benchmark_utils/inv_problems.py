@@ -78,6 +78,8 @@ def define_prior_model(prior_model, device, **kwargs):
         prior = GSPnP(
             denoiser=dinv.models.GSDRUNet(pretrained="download", train=False).to(device)
         )
+    elif prior_model == "TV":
+        prior = dinv.optim.prior.TVPrior(n_it_max=30)
 
 
     else:
