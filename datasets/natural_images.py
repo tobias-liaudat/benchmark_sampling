@@ -24,13 +24,14 @@ class Dataset(BaseDataset):
     # Any parameters 'param' defined here is available as `self.param`.
     parameters = {
         "n_samples": [4],
-        "sigma": [0.01],
+        "sigma": [0.02],
         "random_state": [27],
         "extension": ["png"],
-        "inv_problem": ["inpainting"],
+        "inv_problem": ["gaussian_deblurring"],
         "noise_model": ["gaussian"],
-        "blur_sd": [(3, 3)],
+        "blur_sd": [(0.5, 0.5)],
         "prop_inpaint": [0.5],
+        "img_size" : [64],
     }
 
     # List of packages needed to run the dataset. See the corresponding
@@ -69,8 +70,11 @@ class Dataset(BaseDataset):
 
         x_true = torch.tensor(np.array(gt_img_list), dtype=torch.float32, device=device)
 
-        # Crop image to 64x64
-        x_true = tv.transforms.CenterCrop(64)(x_true)
+        
+
+        # Crop image to [img_size x img_size]
+        if x_true.shape[-1] < self.img_size:
+            x_true = tv.transforms.CenterCrop(self.img_size)(x_true)
 
         # Add new channel dimension to 1
         x_true = x_true[:, None, :, :]
