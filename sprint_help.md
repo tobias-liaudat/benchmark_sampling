@@ -61,6 +61,48 @@ We need to set the number of iterations (`-n`) and the timeout (`--timeout`) wit
 run benchmark_sampling/ -d natural_images -s pnp-ula  -n 10 --timeout 10000
 ```
 
+## Working benchmarks with parameters
+
+data set parameters (natural_images)
+```
+    parameters = {
+        "n_samples": [4],
+        "sigma": [0.01],
+        "random_state": [27],
+        "extension": ["png"],
+        "inv_problem": ["inpainting"],
+        "noise_model": ["gaussian"],
+        "blur_sd": [(0.75, 0.75)],
+        "prop_inpaint": [0.5],
+        "img_size" : [64],
+    }
+
+```
+Algorithm parameters (pnp-ula)
+```
+    parameters = {
+        "scale_step": [0.99],
+        "burnin": [0],
+        "stats_window_length": [100],
+        "thinning_step": [1],
+        "iterations": [100],
+        "alpha": [10.0],
+    }
+```
+Objective parameters
+```
+    parameters = {
+        "prior_model": ["dncnn_lipschitz_gray"],
+        "compute_PSNR": [True],
+        "compute_lpips": [True],
+        "compute_ssim": [False],
+        "compute_acf_ess": [True],
+        "compute_metric_last_sample": [True],
+        "compute_metric_sample_means": [[5, 10]],
+        "save_image": [True],
+        "save_every_iter": [20],
+    }
+```
 
 
 ## Code snippets
