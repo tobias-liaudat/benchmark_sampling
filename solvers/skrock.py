@@ -79,7 +79,7 @@ class Solver(BaseSolver):
         )
 
         # Define the sampler
-        sampler = dinv.sampling.langevin.inner_iter(
+        sampler = dinv.sampling.langevin.SKRockIterator(
             step_size, self.alpha, self.inner_iter, self.eta, sigma_noise_lvl
         )
 
