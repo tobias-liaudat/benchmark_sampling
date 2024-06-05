@@ -26,10 +26,10 @@ class Solver(BaseSolver):
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
-        "scale_step": [0.99],
-        "burnin": [0],
-        "stats_window_length": [100],
-        "thinning_step": [1],
+        "scale_step": [0.9],
+        "burnin": [200],
+        "stats_window_length": [50],
+        "thinning_step": [5],
         "iterations": [100],
         "alpha": [10.],
     }
