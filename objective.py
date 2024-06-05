@@ -28,7 +28,7 @@ class Objective(BaseObjective):
     # All parameters 'p' defined here are available as 'self.p'.
     # This means the OLS objective will have a parameter `self.whiten_y`.
     parameters = {
-        "prior_model": ["dncnn_lipschitz_gray"],
+        "prior_model": ["dncnn_lipschitz_gray"],#"gsdrunet_gray"],
         "compute_PSNR": [True],
         "compute_lpips": [True],
         "compute_ssim": [False],

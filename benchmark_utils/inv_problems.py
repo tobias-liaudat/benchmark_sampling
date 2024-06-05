@@ -73,10 +73,25 @@ def define_prior_model(prior_model, device, **kwargs):
                 device=device,
             )
         )
-    elif prior_model == "gsdrunet":
+    elif prior_model == "drunet_gray":
+        prior = dinv.optim.ScorePrior(dinv.models.DRUNet(
+            in_channels=1,
+            out_channels=1,
+            pretrained="download",  # automatically downloads the pretrained weights, set to a path to use custom weights.
+            train=False,
+            device=device,
+            )
+        )
+        
+    elif prior_model == "gsdrunet_gray":
         # Specify the Denoising prior
-        prior = GSPnP(
-            denoiser=dinv.models.GSDRUNet(pretrained="download", train=False).to(device)
+        #prior = GSPnP(
+        prior = dinv.optim.ScorePrior(
+            denoiser=dinv.models.GSDRUNet( 
+                in_channels=1,
+                out_channels=1,
+                pretrained="benchmark_sampling/benchmark_utils/GSDRUNet_grayscale_torch.ckpt", 
+                train=False, device=device)
         )
     elif prior_model == "TV":
         prior = dinv.optim.prior.TVPrior(n_it_max=30)
