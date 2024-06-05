@@ -28,10 +28,10 @@ class Solver(BaseSolver):
     parameters = {
         'scale_step': [0.99],
         'burnin': [0],
-        'stats_window_length': [100],
+        'stats_window_length': [1],
         'thinning_step': [1],
         'iterations': [100],
-        'alpha': [10.]
+        'alpha': [1]
       }
     
 
@@ -84,7 +84,7 @@ class Solver(BaseSolver):
             burnin_x = sampler.forward(
                 burnin_x, self.y, self.physics, self.likelihood, self.prior
             )
-            burnin_x = burnin_x.clamp(min=0.,max=1.)
+            burnin_x = burnin_x.clamp(min=-1.,max=2.)
 
         # Initialise the empty list
         self.x_window = []
@@ -95,7 +95,7 @@ class Solver(BaseSolver):
                 temp = sampler.forward(
                     temp, self.y, self.physics, self.likelihood, self.prior
                 )
-                temp.temp.clamp(min=0.,max=1.)
+                temp = temp.clamp(min=-1.,max=2.)
 
             self.x_window.append(temp)
 
@@ -109,7 +109,7 @@ class Solver(BaseSolver):
                 temp = sampler.forward(
                     temp, self.y, self.physics, self.likelihood, self.prior
                 )
-                temp = temp.clamp(min=0.,max=1.)
+                temp = temp.clamp(min=-1.,max=2.)
             # Add the sample to the list
             self.x_window.append(temp)
 
