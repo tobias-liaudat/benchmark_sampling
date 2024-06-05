@@ -54,7 +54,7 @@ class Solver(BaseSolver):
             prior,
             likelihood,
         )
-        if self.equivariant:
+        if self.equivariant and hasattr(prior, "denoiser"):
             self.prior.denoiser = dinv.models.EquivariantDenoiser(
                 self.prior.denoiser,
                 transform='rotoflips',
