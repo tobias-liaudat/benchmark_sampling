@@ -114,7 +114,7 @@ class Objective(BaseObjective):
                     x_last_sample, self.x_true
                 )
 
-        if self.compute_metric_sample_means[0] != 0:
+        if 0 not in self.compute_metric_sample_means:
             # Compute over an average of the last samples
             for avrg_num in self.compute_metric_sample_means:
                 # Compute posterior mean
