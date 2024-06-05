@@ -26,12 +26,12 @@ class Solver(BaseSolver):
     # the cross product for each key in the dictionary.
     # All parameters 'p' defined here are available as 'self.p'.
     parameters = {
-        "scale_step": [0.99],
-        "burnin": [100],
-        "stats_window_length": [20],
-        "thinning_step": [10],
+        "scale_step": [0.9],
+        "burnin": [40],
+        "stats_window_length": [50],
+        "thinning_step": [2],
         "iterations": [100],
-        "alpha": [1.],
+        "alpha": [10.],
         "eta": [0.05],
         "inner_iter": [10],
     }
@@ -65,7 +65,7 @@ class Solver(BaseSolver):
         # Get initial x
         x_init = self.physics.A_adjoint(self.y)
 
-        sigma_noise_lvl = 0.1#self.physics.noise_model.sigma
+        sigma_noise_lvl = self.physics.noise_model.sigma
 
         # Compute automatically the step size taking into account the Lipschitz constants
         step_size = general_utils.compute_step_size(
