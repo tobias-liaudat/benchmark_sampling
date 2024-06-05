@@ -31,7 +31,7 @@ class Solver(BaseSolver):
         "stats_window_length": [100],
         "thinning_step": [1],
         "iterations": [100],
-        "alpha": [10.0],
+        "alpha": [10.],
     }
 
     # List of packages needed to run the solver. See the corresponding
@@ -88,7 +88,7 @@ class Solver(BaseSolver):
                 burnin_x, self.y, self.physics, self.likelihood, self.prior
             )
             burnin_x = burnin_x.clamp(min=-1.,max=2.)
-
+       
         # Initialise the empty list
         self.x_window = []
         temp = burnin_x

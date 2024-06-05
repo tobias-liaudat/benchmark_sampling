@@ -32,11 +32,12 @@ class Objective(BaseObjective):
         "compute_PSNR": [True],
         "compute_lpips": [True],
         "compute_ssim": [False],
-        "compute_acf_ess": [True],
+        "compute_acf_ess": [False],
+        "compute_posterior_std_dev_pearson_cc" : [False],
         "compute_metric_last_sample": [True],
-        "compute_metric_sample_means": [[5, 10]],
+        "compute_metric_sample_means": [[1, 50]],
         "save_image": [True],
-        "save_every_iter": [20],
+        "save_every_iter": [100],
     }
 
     # List of packages needed to run the benchmark.
@@ -126,6 +127,10 @@ class Objective(BaseObjective):
                     results_dict[metric_name + "_" + str(avrg_num) + "_samples"] = (
                         metric(x_mean, self.x_true)
                     )
+
+        # Compute Pearson correlation coefficient between the posterior mean and the error
+        if self.compute_posterior_std_dev_pearson_cc:
+            a=1
 
         # Compute acf and ess on the batch
         if self.compute_acf_ess:
