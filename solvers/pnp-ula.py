@@ -84,6 +84,7 @@ class Solver(BaseSolver):
             burnin_x = sampler.forward(
                 burnin_x, self.y, self.physics, self.likelihood, self.prior
             )
+            burnin_x = burnin_x.clamp(min=0.,max=1.)
 
         # Initialise the empty list
         self.x_window = []
@@ -94,6 +95,8 @@ class Solver(BaseSolver):
                 temp = sampler.forward(
                     temp, self.y, self.physics, self.likelihood, self.prior
                 )
+                temp.temp.clamp(min=0.,max=1.)
+
             self.x_window.append(temp)
 
         # Now that the window is full carry out the benchmark        
@@ -106,6 +109,7 @@ class Solver(BaseSolver):
                 temp = sampler.forward(
                     temp, self.y, self.physics, self.likelihood, self.prior
                 )
+                temp = temp.clamp(min=0.,max=1.)
             # Add the sample to the list
             self.x_window.append(temp)
 

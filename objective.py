@@ -31,7 +31,7 @@ class Objective(BaseObjective):
         'compute_PSNR' : [True],
         'compute_lpips' : [True],
         'compute_ssim' : [True],
-        'compute_acf_ess' : [True],
+        'compute_acf_ess' : [False],
         'save_image'      : [True],
         'save_every_iter' : [20]
     }

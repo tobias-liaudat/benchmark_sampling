@@ -65,6 +65,11 @@ def define_prior_model(prior_model, device, **kwargs):
                 device=device
             )
         )
+    elif prior_model == "TV":
+        prior = dinv.optim.ScorePrior(
+            denoiser = dinv.models.TVDenoiser(
+            ).to(device)
+        )
     else:
         raise NotImplementedError("Prior model {:s} not yet implemented.".format(prior_model))
 
