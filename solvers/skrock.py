@@ -19,7 +19,7 @@ with safe_import_context() as import_ctx:
 class Solver(BaseSolver):
 
     # Name to select the solver in the CLI and to display the results.
-    name = "pnp-ula"
+    name = "skrock"
     stopping_criterion = NoCriterion(strategy="callback")
 
     # List of parameters for the solver. The benchmark will consider
