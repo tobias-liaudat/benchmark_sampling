@@ -64,7 +64,7 @@ run benchmark_sampling/ -d natural_images -s pnp-ula  -n 10 --timeout 10000
 ## Working benchmarks with parameters
 
 data set parameters (natural_images)
-```
+```python
     parameters = {
         "n_samples": [4],
         "sigma": [0.01],
@@ -79,7 +79,7 @@ data set parameters (natural_images)
 
 ```
 Algorithm parameters (pnp-ula)
-```
+``` python
     parameters = {
         "scale_step": [0.99],
         "burnin": [0],
@@ -90,7 +90,7 @@ Algorithm parameters (pnp-ula)
     }
 ```
 Objective parameters
-```
+```python
     parameters = {
         "prior_model": ["dncnn_lipschitz_gray"],
         "compute_PSNR": [True],
