@@ -8,7 +8,9 @@ with safe_import_context() as import_ctx:
     import deepinv as dinv
     import torch
     from benchmark_utils import inv_problems, general_utils, eval_tools
-
+    from torchvision.utils import save_image
+    import os
+    import datetime
 
 # The benchmark objective must be named `Objective` and
 # inherit from `BaseObjective` for `benchopt` to work properly.
@@ -28,8 +30,10 @@ class Objective(BaseObjective):
         'prior_model' : ["dncnn_lipschitz_gray"],
         'compute_PSNR' : [True],
         'compute_lpips' : [True],
-        'compute_ssim' : [False],
+        'compute_ssim' : [True],
         'compute_acf_ess' : [True],
+        'save_image'      : [True],
+        'save_every_iter' : [20]
     }
 
     # List of packages needed to run the benchmark.
@@ -73,7 +77,12 @@ class Objective(BaseObjective):
 
         # Compute posterior mean
         x_post_mean = torch.mean(torch.stack(x_window, dim=0), dim=0)
-
+        
+        if self.save_image:
+            if self.it % self.save_every_iter == 0:
+                save_image(x_post_mean, os.path.join(self.im_folder, 'mean_iter_{}.png'.format(self.it)), nrow=2)
+                save_image(x_window[-1], os.path.join(self.im_folder, 'sample_iter_{}.png'.format(self.it)), nrow=2)
+            self.it+=1
 
         # Iterate over the metrics
         for metric, metric_name in zip(self.metrics_list, self.metrics_list_name):
@@ -106,6 +115,17 @@ class Objective(BaseObjective):
         # It is customizable for each benchmark.
 
         device = general_utils.get_best_device()
+
+        if self.save_image:
+            self.it = 0  # Image index for saving
+            ## Create folder for images
+            date = datetime.date.today()
+            now = datetime.datetime.now()
+            date = '{day}_{month}__{hr}_{mn}_{s}'.format(day=date.day,month=date.month, hr=now.hour, mn=now.minute, s=now.second)
+            self.im_folder =  './benchmark_sampling/output_ims/' + date
+            if not os.path.exists(self.im_folder):
+                os.makedirs(self.im_folder, exist_ok=True)
+
 
         self.prior = inv_problems.define_prior_model(
             self.prior_model,
