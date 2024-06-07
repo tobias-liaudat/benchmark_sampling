@@ -19,7 +19,7 @@ def get_best_device():
 
 
 def compute_step_size(
-    x_init, y, physics, likelihood, prior, scale_step, sigma_noise_lvl
+    x_init, physics, likelihood, prior, scale_step, sigma_noise_lvl
 ):
 
     # Get likelihood norm
@@ -40,7 +40,6 @@ def compute_step_size(
     # We need to detach the variables after the gradient calculations in the
     # calculation of the spectral norm
     x_init = x_init.detach()
-    y = y.detach()
 
     # Compute step size
     step_size = (
