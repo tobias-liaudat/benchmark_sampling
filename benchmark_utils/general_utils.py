@@ -27,7 +27,7 @@ def compute_step_size(
     # Get norm of the physics operator
     physics_norm = physics.compute_norm(x_init)
     # Full likelihood norm
-    likelihood_lips = physics_norm + likelihood_term_norm
+    likelihood_lips = physics_norm * likelihood_term_norm
 
     # Compute prior lipschitz
     spectral_norm_op = dinv.loss.regularisers.JacobianSpectralNorm(
