@@ -28,7 +28,7 @@ class Solver(BaseSolver):
     parameters = {
         "scale_step": [0.9],
         "burnin": [200],
-        "stats_window_length": [50],
+        "stats_window_length": [100],
         "thinning_step": [5],
         "iterations": [100],
         "alpha": [10.],
@@ -69,7 +69,6 @@ class Solver(BaseSolver):
         # Compute automatically the step size taking into account the Lipschitz constants
         step_size = general_utils.compute_step_size(
             x_init=x_init.clone(),
-            y=self.y.clone(),
             physics=self.physics,
             likelihood=self.likelihood,
             prior=self.prior,
@@ -99,7 +98,7 @@ class Solver(BaseSolver):
                 temp = sampler.forward(
                     temp, self.y, self.physics, self.likelihood, self.prior
                 )
-                temp = temp.clamp(min=-1.,max=2.)
+                temp = temp.clamp(min=-0.1,max=1.1)
 
             self.x_window.append(temp)
 
